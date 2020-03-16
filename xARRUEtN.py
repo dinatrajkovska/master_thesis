@@ -17,7 +17,7 @@ from tqdm import tqdm
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 
-
+# DINKSI POCNA DA KORISTI GIT
 batch_size = 64
 epochs = 50
 save_model_path = "models/best.pt"
