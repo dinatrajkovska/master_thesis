@@ -16,16 +16,6 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
 
-"""
-batch_size = 16
-epochs = 100
-save_model_path = "models/best.pt"
-sampling_rate = None
-dataset_name = "data_50"
-dft_window_size = 512
-hop_length = 512
-"""
-
 
 def train_model(
     batch_size,
@@ -341,7 +331,7 @@ def train_model(
 
 
 if __name__ == "__main__":
-    parser = parser = argparse.ArgumentParser(description="Process some integers.")
+    parser = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
