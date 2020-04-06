@@ -42,15 +42,20 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    train_dataset = Subset(AudioDataset(
-        dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
-    ), list(range(10)))
-    val_dataset = Subset(AudioDataset(
-        dataset_path, [4], sampling_rate, dft_window_size, hop_length
-    ), list(range(5)))
-    test_dataset = Subset(AudioDataset(
-        dataset_path, [5], sampling_rate, dft_window_size, hop_length
-    ), list(range(5)))
+    train_dataset = Subset(
+        AudioDataset(
+            dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
+        ),
+        list(range(10)),
+    )
+    val_dataset = Subset(
+        AudioDataset(dataset_path, [4], sampling_rate, dft_window_size, hop_length),
+        list(range(5)),
+    )
+    test_dataset = Subset(
+        AudioDataset(dataset_path, [5], sampling_rate, dft_window_size, hop_length),
+        list(range(5)),
+    )
 
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
