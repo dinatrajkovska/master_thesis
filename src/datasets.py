@@ -5,6 +5,8 @@ import librosa
 import os
 
 
+# https://github.com/karolpiczak/ESC-50
+
 class AudioDataset(torch.utils.data.Dataset):
     def __init__(
         self, directory_path, dataset_folds, sampling_rate, dft_window_size, hop_length
