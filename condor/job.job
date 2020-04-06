@@ -1,0 +1,31 @@
+Universe	= vanilla
+# Request 1 CPU for this job
+RequestCpus	= 1
+# Request at least 10G CPU memory for this job
+RequestMemory	= 10G
+# Allow this job to run for a maximum of 360000s
++RequestWalltime	= 360000 
+
+# Request 1 GPU for this job
+request_GPUs	= 1
+# Request at least 7.5G RAM GPU memory for this job
+requirements	= (CUDAGlobalMemoryMb >= 7500) && (CUDACapability >= 3.5) && (has_avx == True)
+
+# Execute job as a nice user
+NiceUser = true
+
+Notification = Never
+# Start job from current directory
+initialdir = . 
+
+# Execute shell file
+executable = create_environment.sh
+# Define argument for shell file
+arguments = "../python/main.py"
+
+# Define paths for log, output and error files, allowing you to debug and read output of your jobs.
+Log          = test.log
+Output       = test.out
+Error        = test.err
+
+Queue
