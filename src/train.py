@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
@@ -42,15 +42,15 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    train_dataset = AudioDataset(
+    train_dataset = Subset(AudioDataset(
         dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
-    )
-    val_dataset = AudioDataset(
+    ), list(range(10)))
+    val_dataset = Subset(AudioDataset(
         dataset_path, [4], sampling_rate, dft_window_size, hop_length
-    )
-    test_dataset = AudioDataset(
+    ), list(range(5)))
+    test_dataset = Subset(AudioDataset(
         dataset_path, [5], sampling_rate, dft_window_size, hop_length
-    )
+    ), list(range(5)))
 
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
@@ -78,7 +78,7 @@ def train_model(
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
-                audio, target = (audio.to(device), target.to(device))
+                audio, target = audio.to(device), target.to(device)
                 prediction = model(audio)
                 loss = criterion(prediction, target)
                 # backward
@@ -98,11 +98,12 @@ def train_model(
             for audio, target in tqdm(val_loader):
                 audio, target = audio.to(device), target.to(device)
                 probs = model(audio)
-                pred = probs.argmax(dim=1, keepdim=True)
+                pred = probs.argmax(dim=-1)
                 # Aggregate predictions and targets
-                predictions[index : index + len(target)] = pred.cpu().numpy()[:, 0]
-                targets[index : index + len(target)] = target.cpu().numpy()
-                index += len(target)
+                cur_batch_size = target.size()[0]
+                predictions[index : index + cur_batch_size] = pred.cpu().numpy()
+                targets[index : index + cur_batch_size] = target.cpu().numpy()
+                index += cur_batch_size
 
             cur_accuracy = accuracy_score(targets, predictions)
             if cur_accuracy > best_accuracy:
@@ -111,14 +112,6 @@ def train_model(
                 print(
                     f"Best on epoch {epoch+1} with accuracy {best_accuracy}! Saving..."
                 )
-                if dataset_name == "data_10":
-                    precisions, recalls, _, _ = precision_recall_fscore_support(
-                        targets, predictions, zero_division=0
-                    )
-                    for i, (precision, recall) in enumerate(zip(precisions, recalls)):
-                        print(
-                            f"The precision | recall for class {i}: {precision} | {recall}"
-                        )
                 print("===========================")
                 torch.save(model.state_dict(), save_model_path)
             else:
@@ -134,11 +127,12 @@ def train_model(
         for audio, target in tqdm(test_loader):
             audio, target = audio.to(device), target.to(device)
             probs = model(audio)
-            pred = probs.argmax(dim=1, keepdim=True)
+            pred = probs.argmax(dim=-1)
             # Aggregate predictions and targets
-            predictions[index : index + len(target)] = pred.cpu().numpy()[:, 0]
-            targets[index : index + len(target)] = target.cpu().numpy()
-            index += len(target)
+            cur_batch_size = target.size()[0]
+            predictions[index : index + cur_batch_size] = pred.cpu().numpy()
+            targets[index : index + cur_batch_size] = target.cpu().numpy()
+            index += cur_batch_size
 
         print(f"Test accuracy {accuracy_score(targets, predictions)}!")
         precisions, recalls, _, _ = precision_recall_fscore_support(
