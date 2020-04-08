@@ -12,15 +12,15 @@ class AudioDataset(torch.utils.data.Dataset):
     def __init__(
         self, directory_path, dataset_folds, sampling_rate, dft_window_size, hop_length
     ):
-        self.filenames = []
+        self.filepaths = []
         for filename in os.listdir(directory_path):
             if int(filename[0]) in dataset_folds:
-                self.filenames.append(os.path.join(directory_path, filename))
+                self.filepaths.append(os.path.join(directory_path, filename))
         self.log_mel_spectrograms = []
         self.delta_log_mel_spectrograms = []
         self.targets = []
         print("Loading data...")
-        for filename in tqdm(self.filenames):
+        for filename in tqdm(self.filepaths):
             # Read file
             (audio, sr) = librosa.load(filename, sr=sampling_rate)
             # Convert stereo to mono if necessary

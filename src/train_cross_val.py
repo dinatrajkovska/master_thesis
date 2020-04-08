@@ -9,13 +9,14 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
 
 from datasets import AudioDataset
 from modeling import get_seq_model
+from modeling import AttentionModel
 
 
 def train_model(
@@ -24,7 +25,7 @@ def train_model(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     feature_size = {"None": 16896, "8000": 2816, "16000": 5632}
-    num_classes = {"data_10": 10, "data_50": 50}
+    data2class = {"data_10": 10, "data_50": 50}
 
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
@@ -46,17 +47,11 @@ def train_model(
     total_accuracy = 0
     for split_num, split in enumerate(data_splits):
         print(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = Subset(
-            AudioDataset(
-                dataset_path, split[0], sampling_rate, dft_window_size, hop_length
-            ),
-            list(range(10)),
+        train_dataset = AudioDataset(
+            dataset_path, split[0], sampling_rate, dft_window_size, hop_length
         )
-        test_dataset = Subset(
-            AudioDataset(
-                dataset_path, split[1], sampling_rate, dft_window_size, hop_length
-            ),
-            list(range(5)),
+        test_dataset = AudioDataset(
+            dataset_path, split[1], sampling_rate, dft_window_size, hop_length
         )
 
         train_loader = DataLoader(
@@ -66,12 +61,15 @@ def train_model(
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
         ### One option is to create a Sequential model.
-        model = get_seq_model(feature_size, num_classes[dataset_name]).to(device)
+        # model = get_seq_model(data2class[dataset_name]).to(device)
+        model = AttentionModel(data2class[dataset_name]).to(device)
 
         criterion = nn.NLLLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0002)
 
-        print(f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples.")
+        print(
+            f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
+        )
 
         best_accuracy = -1
         for epoch in range(epochs):
@@ -106,13 +104,13 @@ def train_model(
                 pred = probs.argmax(dim=-1)
                 # Aggregate predictions and targets
                 cur_batch_size = target.size()[0]
-                predictions[index : index + cur_batch_size] = pred.cpu().numpy()
+                predictions[index : index + cur_batch_size] = pred.cpu.numpy()
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 
             print(f"Test accuracy: {accuracy_score(targets, predictions)}!")
             total_accuracy += accuracy_score(targets, predictions)
-    
+
     print(f"The total accuracy is {total_accuracy / len(data_splits)}")
 
 
