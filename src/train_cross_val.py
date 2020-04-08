@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
@@ -20,7 +20,13 @@ from modeling import AttentionModel
 
 
 def train_model(
-    num_classes, batch_size, epochs, sampling_rate, dataset_path, dft_window_size, hop_length
+    num_classes,
+    batch_size,
+    epochs,
+    sampling_rate,
+    dataset_path,
+    dft_window_size,
+    hop_length,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -45,11 +51,17 @@ def train_model(
     total_accuracy = 0
     for split_num, split in enumerate(data_splits):
         print(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = AudioDataset(
-            dataset_path, split[0], sampling_rate, dft_window_size, hop_length
+        train_dataset = Subset(
+            AudioDataset(
+                dataset_path, split[0], sampling_rate, dft_window_size, hop_length
+            ),
+            [0, 1, 2, 3, 4, 5],
         )
-        test_dataset = AudioDataset(
-            dataset_path, split[1], sampling_rate, dft_window_size, hop_length
+        test_dataset = Subset(
+            AudioDataset(
+                dataset_path, split[1], sampling_rate, dft_window_size, hop_length
+            ),
+            [0, 1, 2],
         )
 
         train_loader = DataLoader(
@@ -102,7 +114,7 @@ def train_model(
                 pred = probs.argmax(dim=-1)
                 # Aggregate predictions and targets
                 cur_batch_size = target.size()[0]
-                predictions[index : index + cur_batch_size] = pred.cpu.numpy()
+                predictions[index : index + cur_batch_size] = pred.cpu().numpy()
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 

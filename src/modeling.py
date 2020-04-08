@@ -169,9 +169,6 @@ class MainBlock(nn.Module):
 
 
 class DepthwiseSeparableConv(nn.Module):
-    # https://pytorch.org/docs/stable/nn.html#torch.nn.Conv2d
-    # https://discuss.pytorch.org/t/how-to-modify-a-conv2d-to-depthwise-separable-convolution/15843/11
-    # https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-b99ec3102728
     def __init__(self, in_channels, out_channels, kernel_size, padding):
         super(DepthwiseSeparableConv, self).__init__()
         self.depthwise = nn.Conv2d(
