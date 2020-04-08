@@ -20,12 +20,11 @@ from modeling import AttentionModel
 
 
 def train_model(
-    batch_size, epochs, sampling_rate, dataset_name, dft_window_size, hop_length
+    num_classes, batch_size, epochs, sampling_rate, dataset_path, dft_window_size, hop_length
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     feature_size = {"None": 16896, "8000": 2816, "16000": 5632}
-    data2class = {"data_10": 10, "data_50": 50}
 
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
@@ -36,7 +35,6 @@ def train_model(
     ### Now, for simplicity, we take folds 1-3 as train folds, 4 as validation fold and 5 as test fold.
     ### The target class number indicates which sound is present in the file.
 
-    dataset_path = os.path.join("data", dataset_name)
     data_splits = [
         ([1, 2, 3, 4], [5]),
         ([1, 2, 3, 5], [4]),
@@ -61,8 +59,8 @@ def train_model(
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
         ### One option is to create a Sequential model.
-        # model = get_seq_model(data2class[dataset_name]).to(device)
-        model = AttentionModel(data2class[dataset_name]).to(device)
+        # model = get_seq_model(num_classes).to(device)
+        model = AttentionModel(num_classes).to(device)
 
         criterion = nn.NLLLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0002)
@@ -116,18 +114,20 @@ def train_model(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument("--num_classes", default=50, type=int)
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--sampling_rate", default=None, type=int)
-    parser.add_argument("--dataset_name", default="data_50", type=str)
+    parser.add_argument("--dataset_path", default="data/data_50", type=str)
     parser.add_argument("--dft_window_size", default=512, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     args = parser.parse_args()
     train_model(
+        args.num_classes,
         args.batch_size,
         args.epochs,
         args.sampling_rate,
-        args.dataset_name,
+        args.dataset_path,
         args.dft_window_size,
         args.hop_length,
     )
