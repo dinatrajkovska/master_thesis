@@ -121,11 +121,11 @@ def train_model(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument("--num_classes", default=50, type=int)
-    parser.add_argument("--batch_size", default=16, type=int)
-    parser.add_argument("--epochs", default=100, type=int)
+    parser.add_argument("--batch_size", default=64, type=int)
+    parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_path", default="data/data_50", type=str)
-    parser.add_argument("--dft_window_size", default=512, type=int)
+    parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     args = parser.parse_args()
     train_model(
