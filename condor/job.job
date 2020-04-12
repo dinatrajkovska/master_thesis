@@ -21,7 +21,7 @@ initialdir = .
 # Execute shell file
 executable = create_environment.sh
 # Define argument for shell file
-arguments = "../python/main.py"
+# arguments = "../python/main.py"
 
 # Define paths for log, output and error files, allowing you to debug and read output of your jobs.
 Log          = test.log
