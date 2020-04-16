@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
@@ -55,17 +55,11 @@ def train_model(
     total_accuracy = 0
     for split_num, split in enumerate(data_splits):
         logger.info(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = Subset(
-            AudioDataset(
-                dataset_path, split[0], sampling_rate, dft_window_size, hop_length
-            ),
-            list(range(10)),
+        train_dataset = AudioDataset(
+            dataset_path, split[0], sampling_rate, dft_window_size, hop_length
         )
-        test_dataset = Subset(
-            AudioDataset(
-                dataset_path, split[1], sampling_rate, dft_window_size, hop_length
-            ),
-            list(range(10)),
+        test_dataset = AudioDataset(
+            dataset_path, split[1], sampling_rate, dft_window_size, hop_length
         )
 
         train_loader = DataLoader(
@@ -132,7 +126,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument("--num_classes", default=50, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
-    parser.add_argument("--epochs", default=2, type=int)
+    parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_path", default="data/data_50", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)

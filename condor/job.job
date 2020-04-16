@@ -7,7 +7,7 @@ RequestMemory	= 10G
 +RequestWalltime	= 360000 
 
 # Request 1 GPU for this job
-request_GPUs	= 0
+request_GPUs	= 1
 # Request at least 7.5G RAM GPU memory for this job
 requirements	= (CUDAGlobalMemoryMb >= 7500) && (CUDACapability >= 3.5) && (has_avx == True)
 
@@ -24,8 +24,8 @@ executable = create_environment.sh
 arguments = "src/train_cross_val.py"
 
 # Define paths for log, output and error files, allowing you to debug and read output of your jobs.
-Log          = test.log
-Output       = test.out
-Error        = test.err
+Log          = condor/test.log
+Output       = condor/test.out
+Error        = condor/test.err
 
 Queue
