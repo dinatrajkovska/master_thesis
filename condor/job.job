@@ -7,7 +7,7 @@ RequestMemory	= 10G
 +RequestWalltime	= 360000 
 
 # Request 1 GPU for this job
-request_GPUs	= 1
+request_GPUs	= 0
 # Request at least 7.5G RAM GPU memory for this job
 requirements	= (CUDAGlobalMemoryMb >= 7500) && (CUDACapability >= 3.5) && (has_avx == True)
 
