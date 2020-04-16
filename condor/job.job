@@ -16,12 +16,12 @@ NiceUser = true
 
 Notification = Never
 # Start job from current directory
-initialdir = . 
+initialdir = ../
 
 # Execute shell file
 executable = create_environment.sh
 # Define argument for shell file
-arguments = "../src/train_cross_val.py"
+arguments = "src/train_cross_val.py"
 
 # Define paths for log, output and error files, allowing you to debug and read output of your jobs.
 Log          = test.log
