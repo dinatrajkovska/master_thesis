@@ -9,14 +9,18 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
+import logging
 
 from datasets import AudioDataset
 from modeling import get_seq_model
 from modeling import AttentionModel
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def train_model(
@@ -50,12 +54,18 @@ def train_model(
     ]
     total_accuracy = 0
     for split_num, split in enumerate(data_splits):
-        print(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = AudioDataset(
-            dataset_path, split[0], sampling_rate, dft_window_size, hop_length
+        logger.info(f"----------- Starting split number {split_num + 1} -----------")
+        train_dataset = Subset(
+            AudioDataset(
+                dataset_path, split[0], sampling_rate, dft_window_size, hop_length
+            ),
+            list(range(10)),
         )
-        test_dataset = AudioDataset(
-            dataset_path, split[1], sampling_rate, dft_window_size, hop_length
+        test_dataset = Subset(
+            AudioDataset(
+                dataset_path, split[1], sampling_rate, dft_window_size, hop_length
+            ),
+            list(range(10)),
         )
 
         train_loader = DataLoader(
@@ -71,13 +81,13 @@ def train_model(
         criterion = nn.NLLLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0002)
 
-        print(
+        logger.info(
             f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
         )
 
         best_accuracy = -1
         for epoch in range(epochs):
-            print(f"Starting epoch {epoch + 1}...")
+            logger.info(f"Starting epoch {epoch + 1}...")
             # Set model in train mode
             model.train(True)
             with tqdm(total=len(train_loader)) as pbar:
@@ -112,17 +122,17 @@ def train_model(
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 
-            print(f"Test accuracy: {accuracy_score(targets, predictions)}!")
+            logger.info(f"Test accuracy: {accuracy_score(targets, predictions)}!")
             total_accuracy += accuracy_score(targets, predictions)
 
-    print(f"The total accuracy is {total_accuracy / len(data_splits)}")
+    logger.info(f"The total accuracy is {total_accuracy / len(data_splits)}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument("--num_classes", default=50, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
-    parser.add_argument("--epochs", default=500, type=int)
+    parser.add_argument("--epochs", default=2, type=int)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_path", default="data/data_50", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)
