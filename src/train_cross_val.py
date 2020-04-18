@@ -69,8 +69,8 @@ def train_model(
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
         ### One option is to create a Sequential model.
-        # model = get_seq_model(num_classes).to(device)
-        model = AttentionModel(num_classes).to(device)
+        model = get_seq_model(num_classes).to(device)
+        # model = AttentionModel(num_classes).to(device)
 
         criterion = nn.NLLLoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0002)
