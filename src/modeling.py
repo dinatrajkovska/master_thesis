@@ -191,7 +191,7 @@ class DepthwiseSeparableConv(nn.Module):
 
 class AttnBlock(nn.Module):
     def __init__(
-        self, in_channels, out_channels, kernel_size, padding, pool_size, maxpool_pad, 
+        self, in_channels, out_channels, kernel_size, padding, pool_size, maxpool_pad
     ):
         super(AttnBlock, self).__init__()
         self.maxpool = nn.MaxPool2d(kernel_size=pool_size, padding=maxpool_pad)
@@ -317,28 +317,28 @@ class AttentionModel(nn.Module):
     def forward(self, x):
         # Block 1
         out_cnn = self.main1(x)
-        out_attn = self.attn1(x)
-        out = out_cnn * out_attn
+        # out_attn = self.attn1(x)
+        out = out_cnn  # * out_attn
         # Block 2
         out_cnn = self.main2(out)
-        out_attn = self.attn2(out)
-        out = out_cnn * out_attn
+        # out_attn = self.attn2(out)
+        out = out_cnn  # * out_attn
         # Block 3
         out_cnn = self.main3(out)
-        out_attn = self.attn3(out)
-        out = out_cnn * out_attn
+        # out_attn = self.attn3(out)
+        out = out_cnn  # * out_attn
         # Block 4
         out_cnn = self.main4(out)
-        out_attn = self.attn4(out)
-        out = out_cnn * out_attn
+        # out_attn = self.attn4(out)
+        out = out_cnn  # * out_attn
         # Block 5
         out_cnn = self.main5(out)
-        out_attn = self.attn5(out)
-        out = out_cnn * out_attn
+        # out_attn = self.attn5(out)
+        out = out_cnn  # * out_attn
         # Block 6
         out_cnn = self.main6(out)
-        out_attn = self.attn6(out)
-        out = out_cnn * out_attn
+        # out_attn = self.attn6(out)
+        out = out_cnn  # * out_attn
         # Last Layers
         out = self.flatten(out)
         out = self.linear1(out)
