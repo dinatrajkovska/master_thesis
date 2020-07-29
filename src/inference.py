@@ -14,7 +14,7 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
 
-from datasets import AudioDataset
+from datasets import AudioDatasetStatic
 from modeling import get_seq_model
 
 
@@ -28,8 +28,6 @@ def inference(
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"-------- Using device {device} --------")
-
-    feature_size = {"None": 16896, "8000": 2816, "16000": 5632}
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
     ### {fold number}-{file id}-{take number}-{target class number}
@@ -40,7 +38,7 @@ def inference(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    test_dataset = AudioDataset(
+    test_dataset = AudioDatasetStatic(
         dataset_path, [5], sampling_rate, dft_window_size, hop_length
     )
     print(f"Inference on {len(test_dataset)} samples.")
@@ -63,8 +61,9 @@ def inference(
             predictions[index : index + cur_batch_size] = pred.cpu().numpy()
             targets[index : index + cur_batch_size] = target.cpu().numpy()
             index += cur_batch_size
-
+        print("===========================")
         print(f"Test accuracy {accuracy_score(targets, predictions)}!")
+        print("===========================")
         _, recalls, _, _ = precision_recall_fscore_support(
             targets, predictions, zero_division=0
         )

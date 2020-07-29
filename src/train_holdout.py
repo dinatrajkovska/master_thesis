@@ -14,7 +14,7 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
 
-from datasets import AudioDataset
+from datasets import AudioDatasetDynamic
 from modeling import get_seq_model
 
 
@@ -31,8 +31,6 @@ def train_model(
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"-------- Using device {device} --------")
-
-    feature_size = {"None": 16896, "8000": 2816, "16000": 5632}
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
     ### {fold number}-{file id}-{take number}-{target class number}
@@ -43,14 +41,11 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    train_dataset = AudioDataset(
+    train_dataset = AudioDatasetDynamic(
         dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
     )
-    val_dataset = AudioDataset(
+    val_dataset = AudioDatasetDynamic(
         dataset_path, [4], sampling_rate, dft_window_size, hop_length
-    )
-    test_dataset = AudioDataset(
-        dataset_path, [5], sampling_rate, dft_window_size, hop_length
     )
 
     train_loader = DataLoader(
@@ -58,8 +53,6 @@ def train_model(
     )
 
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
-
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
     ### One option is to create a Sequential model.
     model = get_seq_model().to(device)

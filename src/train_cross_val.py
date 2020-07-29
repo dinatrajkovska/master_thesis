@@ -15,7 +15,7 @@ from tqdm import tqdm
 import argparse
 import logging
 
-from datasets import AudioDataset
+from datasets import AudioDatasetStatic
 from modeling import get_seq_model
 from modeling import AttentionModel
 
@@ -33,9 +33,6 @@ def train_model(
     hop_length,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    feature_size = {"None": 16896, "8000": 2816, "16000": 5632}
-
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
     ### {fold number}-{file id}-{take number}-{target class number}
@@ -55,10 +52,10 @@ def train_model(
     total_accuracy = 0
     for split_num, split in enumerate(data_splits):
         logger.info(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = AudioDataset(
+        train_dataset = AudioDatasetStatic(
             dataset_path, split[0], sampling_rate, dft_window_size, hop_length
         )
-        test_dataset = AudioDataset(
+        test_dataset = AudioDatasetStatic(
             dataset_path, split[1], sampling_rate, dft_window_size, hop_length
         )
 
