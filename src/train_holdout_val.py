@@ -30,7 +30,7 @@ def train_model(
     weight_decay,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device {device}")
+    print(f"-------- Using device {device} --------")
 
     feature_size = {"None": 16896, "8000": 2816, "16000": 5632}
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
@@ -118,29 +118,6 @@ def train_model(
                 torch.save(model.state_dict(), save_model_path)
             else:
                 print(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
-
-    model.load_state_dict(torch.load(save_model_path))
-    # Set model in evaluation mode
-    model.train(False)
-    predictions = np.zeros(len(val_dataset))
-    targets = np.zeros(len(val_dataset))
-    index = 0
-    with torch.no_grad():
-        for audio, target in tqdm(test_loader):
-            audio, target = audio.to(device), target.to(device)
-            probs = model(audio).argmax(dim=-1)
-            # Aggregate predictions and targets
-            cur_batch_size = target.size()[0]
-            predictions[index : index + cur_batch_size] = pred.cpu().numpy()
-            targets[index : index + cur_batch_size] = target.cpu().numpy()
-            index += cur_batch_size
-
-        print(f"Test accuracy {accuracy_score(targets, predictions)}!")
-        _, recalls, _, _ = precision_recall_fscore_support(
-            targets, predictions, zero_division=0
-        )
-        for i, recall in enumerate(recalls):
-            print(f"The accuracy for class {i}: {recall}")
 
 
 if __name__ == "__main__":
