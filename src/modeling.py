@@ -311,7 +311,7 @@ class AttentionModel(nn.Module):
         self.flatten = nn.Flatten()
         self.linear1 = nn.Linear(4096, 512)
         self.leaky_relu = nn.LeakyReLU()
-        self.linear2 = nn.Linear(512, num_classes)
+        self.linear2 = nn.Linear(512, 50)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):

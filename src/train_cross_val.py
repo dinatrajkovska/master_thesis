@@ -12,19 +12,17 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
-import logging
 
 from datasets import AudioDataset
 from modeling import AttentionModel
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def train_model(
     num_classes,
     batch_size,
     epochs,
+    learning_rate,
+    weight_decay,
     sampling_rate,
     dataset_path,
     dft_window_size,
@@ -49,7 +47,7 @@ def train_model(
     ]
     total_accuracy = 0
     for split_num, split in enumerate(data_splits):
-        logger.info(f"----------- Starting split number {split_num + 1} -----------")
+        print(f"----------- Starting split number {split_num + 1} -----------")
         train_dataset = AudioDataset(
             dataset_path, split[0], sampling_rate, dft_window_size, hop_length
         )
@@ -64,18 +62,19 @@ def train_model(
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
         ### One option is to create a Sequential model.
-        # model = get_seq_model(num_classes).to(device)
-        model = AttentionModel(num_classes).to(device)
+        model = AttentionModel().to(device)
 
         criterion = nn.NLLLoss()
-        optimizer = optim.Adam(model.parameters(), lr=0.0002)
+        optimizer = optim.Adam(
+            model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        )
 
-        logger.info(
+        print(
             f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
         )
 
         for epoch in range(epochs):
-            logger.info(f"Starting epoch {epoch + 1}...")
+            print(f"Starting epoch {epoch + 1}...")
             # Set model in train mode
             model.train(True)
             with tqdm(total=len(train_loader)) as pbar:
@@ -110,26 +109,28 @@ def train_model(
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 
-            logger.info(f"Test accuracy: {accuracy_score(targets, predictions)}!")
+            print(f"Test accuracy: {accuracy_score(targets, predictions)}!")
             total_accuracy += accuracy_score(targets, predictions)
 
-    logger.info(f"The total accuracy is {total_accuracy / len(data_splits)}")
+    print(f"The total accuracy is {total_accuracy / len(data_splits)}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some integers.")
-    parser.add_argument("--num_classes", default=50, type=int)
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--epochs", default=500, type=int)
+    parser.add_argument("--learning_rate", default=0.01, type=float)
+    parser.add_argument("--weight_decay", default=0.01, type=float)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_path", default="data/data_50", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     args = parser.parse_args()
     train_model(
-        args.num_classes,
         args.batch_size,
         args.epochs,
+        args.learning_rate,
+        args.weight_decay,
         args.sampling_rate,
         args.dataset_path,
         args.dft_window_size,
