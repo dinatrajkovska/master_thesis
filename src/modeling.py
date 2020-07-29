@@ -1,7 +1,7 @@
 from torch import nn
 
 
-def get_seq_model(num_classes: int):
+def get_seq_model():
     return nn.Sequential(
         # Block 1
         nn.Conv2d(
@@ -122,7 +122,7 @@ def get_seq_model(num_classes: int):
         nn.Flatten(),
         nn.Linear(4096, 512),
         nn.LeakyReLU(),
-        nn.Linear(512, num_classes),
+        nn.Linear(512, 50),
         nn.LogSoftmax(dim=1),
     )
 

@@ -30,10 +30,9 @@ def train_model(
     weight_decay,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device {device}")
 
     feature_size = {"None": 16896, "8000": 2816, "16000": 5632}
-    num_classes = {"data_10": 10, "data_50": 50}
-
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
     ### {fold number}-{file id}-{take number}-{target class number}
@@ -63,7 +62,7 @@ def train_model(
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
     ### One option is to create a Sequential model.
-    model = get_seq_model(num_classes[dataset_name]).to(device)
+    model = get_seq_model().to(device)
 
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(
@@ -101,8 +100,7 @@ def train_model(
         with torch.no_grad():
             for audio, target in tqdm(val_loader):
                 audio, target = audio.to(device), target.to(device)
-                probs = model(audio)
-                pred = probs.argmax(dim=-1)
+                pred = model(audio).argmax(dim=-1)
                 # Aggregate predictions and targets
                 cur_batch_size = target.size()[0]
                 predictions[index : index + cur_batch_size] = pred.cpu().numpy()
@@ -130,8 +128,7 @@ def train_model(
     with torch.no_grad():
         for audio, target in tqdm(test_loader):
             audio, target = audio.to(device), target.to(device)
-            probs = model(audio)
-            pred = probs.argmax(dim=-1)
+            probs = model(audio).argmax(dim=-1)
             # Aggregate predictions and targets
             cur_batch_size = target.size()[0]
             predictions[index : index + cur_batch_size] = pred.cpu().numpy()
@@ -139,11 +136,11 @@ def train_model(
             index += cur_batch_size
 
         print(f"Test accuracy {accuracy_score(targets, predictions)}!")
-        precisions, recalls, _, _ = precision_recall_fscore_support(
+        _, recalls, _, _ = precision_recall_fscore_support(
             targets, predictions, zero_division=0
         )
-        for i, (precision, recall) in enumerate(zip(precisions, recalls)):
-            print(f"The precision | recall for class {i}: {precision} | {recall}")
+        for i, recall in enumerate(recalls):
+            print(f"The accuracy for class {i}: {recall}")
 
 
 if __name__ == "__main__":
