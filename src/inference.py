@@ -7,14 +7,12 @@
 import os
 import numpy as np
 import torch
-from torch import nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
 
-from datasets import AudioDatasetStatic
+from datasets import AudioDataset
 from modeling import get_seq_model
 
 
@@ -38,7 +36,7 @@ def inference(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    test_dataset = AudioDatasetStatic(
+    test_dataset = AudioDataset(
         dataset_path, [5], sampling_rate, dft_window_size, hop_length
     )
     print(f"Inference on {len(test_dataset)} samples.")

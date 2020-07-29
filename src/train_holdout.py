@@ -10,11 +10,11 @@ import torch
 from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
 
-from datasets import AudioDatasetDynamic
+from datasets import AudioDataset
 from modeling import get_seq_model
 
 
@@ -41,10 +41,10 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    train_dataset = AudioDatasetDynamic(
+    train_dataset = AudioDataset(
         dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
     )
-    val_dataset = AudioDatasetDynamic(
+    val_dataset = AudioDataset(
         dataset_path, [4], sampling_rate, dft_window_size, hop_length
     )
 

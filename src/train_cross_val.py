@@ -4,19 +4,17 @@
 ### 1. Change your .bashrc file so you can import globally installed packages (such as TensorFlow)
 ### 2. Install the packages locally
 ### How to do this is described in the speech wiki. If you have questions about this, just ask me.
-import os
 import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
 import logging
 
-from datasets import AudioDatasetStatic
-from modeling import get_seq_model
+from datasets import AudioDataset
 from modeling import AttentionModel
 
 logging.basicConfig(level=logging.INFO)
@@ -52,10 +50,10 @@ def train_model(
     total_accuracy = 0
     for split_num, split in enumerate(data_splits):
         logger.info(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = AudioDatasetStatic(
+        train_dataset = AudioDataset(
             dataset_path, split[0], sampling_rate, dft_window_size, hop_length
         )
-        test_dataset = AudioDatasetStatic(
+        test_dataset = AudioDataset(
             dataset_path, split[1], sampling_rate, dft_window_size, hop_length
         )
 
@@ -76,7 +74,6 @@ def train_model(
             f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
         )
 
-        best_accuracy = -1
         for epoch in range(epochs):
             logger.info(f"Starting epoch {epoch + 1}...")
             # Set model in train mode
