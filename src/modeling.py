@@ -1,7 +1,7 @@
 from torch import nn
 
 
-def get_seq_model(num_classes):
+def get_seq_model(num_classes: int):
     return nn.Sequential(
         # Block 1
         nn.Conv2d(

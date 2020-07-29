@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
@@ -26,6 +26,8 @@ def train_model(
     dataset_name,
     dft_window_size,
     hop_length,
+    learning_rate,
+    weight_decay,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -42,19 +44,14 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    train_dataset = Subset(
-        AudioDataset(
-            dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
-        ),
-        list(range(10)),
+    train_dataset = AudioDataset(
+        dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
     )
-    val_dataset = Subset(
-        AudioDataset(dataset_path, [4], sampling_rate, dft_window_size, hop_length),
-        list(range(5)),
+    val_dataset = AudioDataset(
+        dataset_path, [4], sampling_rate, dft_window_size, hop_length
     )
-    test_dataset = Subset(
-        AudioDataset(dataset_path, [5], sampling_rate, dft_window_size, hop_length),
-        list(range(5)),
+    test_dataset = AudioDataset(
+        dataset_path, [5], sampling_rate, dft_window_size, hop_length
     )
 
     train_loader = DataLoader(
@@ -66,10 +63,12 @@ def train_model(
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
     ### One option is to create a Sequential model.
-    model = get_seq_model(feature_size, num_classes[dataset_name]).to(device)
+    model = get_seq_model(num_classes[dataset_name]).to(device)
 
     criterion = nn.NLLLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.0002)
+    optimizer = optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    )
 
     print(f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples.")
 
@@ -150,6 +149,8 @@ def train_model(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument("--batch_size", default=16, type=int)
+    parser.add_argument("--learning_rate", default=0.01, type=float)
+    parser.add_argument("--weight_decay", default=0.01, type=float)
     parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--sampling_rate", default=None, type=int)
@@ -165,4 +166,6 @@ if __name__ == "__main__":
         args.dataset_name,
         args.dft_window_size,
         args.hop_length,
+        args.learning_rate,
+        args.weight_decay,
     )
