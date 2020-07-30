@@ -19,19 +19,19 @@ from modeling import get_seq_model
 
 
 def train_model(
-    batch_size,
-    epochs,
-    save_model_path,
+    dataset_name,
+    sampling_rate,
+    dft_window_size,
+    hop_length,
     log_mel,
     delta_log_mel,
     mfcc,
     cqt,
     chroma,
-    sampling_rate,
-    dataset_name,
-    dft_window_size,
-    hop_length,
     learning_rate,
+    batch_size,
+    epochs,
+    save_model_path,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"-------- Using device {device} --------")
@@ -164,17 +164,17 @@ if __name__ == "__main__":
     parser.add_argument("--hop_length", default=512, type=int)
     args = parser.parse_args()
     train_model(
-        args.batch_size,
-        args.epochs,
-        args.save_model_path,
+        args.dataset_name,
+        args.sampling_rate,
+        args.dft_window_size,
+        args.hop_length,
         args.log_mel,
         args.delta_log_mel,
         args.mfcc,
         args.cqt,
         args.chroma,
-        args.sampling_rate,
-        args.dataset_name,
-        args.dft_window_size,
-        args.hop_length,
         args.learning_rate,
+        args.batch_size,
+        args.epochs,
+        args.save_model_path,
     )

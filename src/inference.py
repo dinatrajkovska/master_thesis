@@ -17,10 +17,8 @@ from modeling import get_seq_model
 
 
 def inference(
-    batch_size,
-    checkpoint_path,
-    sampling_rate,
     dataset_name,
+    sampling_rate,
     dft_window_size,
     hop_length,
     log_mel,
@@ -28,6 +26,8 @@ def inference(
     mfcc,
     cqt,
     chroma,
+    checkpoint_path,
+    batch_size,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"-------- Using device {device} --------")
@@ -103,10 +103,8 @@ if __name__ == "__main__":
     parser.add_argument("--chroma", action="store_true")
     args = parser.parse_args()
     inference(
-        args.batch_size,
-        args.checkpoint_path,
-        args.sampling_rate,
         args.dataset_name,
+        args.sampling_rate,
         args.dft_window_size,
         args.hop_length,
         args.log_mel,
@@ -114,4 +112,6 @@ if __name__ == "__main__":
         args.mfcc,
         args.cqt,
         args.chroma,
+        args.checkpoint_path,
+        args.batch_size,
     )

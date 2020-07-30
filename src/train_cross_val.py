@@ -167,15 +167,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     train_model(
         args.dataset_name,
-        args.batch_size,
-        args.epochs,
-        args.learning_rate,
+        args.sampling_rate,
+        args.dft_window_size,
+        args.hop_length,
         args.log_mel,
         args.delta_log_mel,
         args.mfcc,
         args.cqt,
         args.chroma,
-        args.sampling_rate,
-        args.dft_window_size,
-        args.hop_length,
+        args.learning_rate,
+        args.batch_size,
+        args.epochs,
     )
