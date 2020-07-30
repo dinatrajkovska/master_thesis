@@ -4,7 +4,6 @@ from tqdm import tqdm
 import librosa
 import os
 
-
 # https://github.com/karolpiczak/ESC-50
 
 
@@ -80,18 +79,14 @@ class AudioDataset(torch.utils.data.Dataset):
                 features.append(constant_q)
             if chromagram:
                 # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
-                spectrogram = librosa.core.stft(
-                    audio,
-                    n_fft=arguments["n_fft"],
-                    hop_length=arguments["hop_length"],
-                    center=arguments["center"],
+                spectrogram = librosa.stft(
+                    audio, n_fft=arguments["n_fft"], hop_length=arguments["hop_length"]
                 )
                 chroma = librosa.feature.chroma_stft(
                     S=np.abs(spectrogram) ** 2,
                     n_fft=arguments["n_fft"],
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
-                    norm=None,
                 )
                 chroma = chroma.T
                 chroma = self.min_max_normalize(chroma)
@@ -109,10 +104,7 @@ class AudioDataset(torch.utils.data.Dataset):
 
     def log_mel_spectrogram(self, audio, arguments):
         spectrogram = librosa.core.stft(
-            audio,
-            n_fft=arguments["n_fft"],
-            hop_length=arguments["hop_length"],
-            center=arguments["center"],
+            audio, n_fft=arguments["n_fft"], hop_length=arguments["hop_length"]
         )
         # Convert to mel spectrogram
         mel_spectrogram = librosa.feature.melspectrogram(

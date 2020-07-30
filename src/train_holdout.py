@@ -45,12 +45,7 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    arguments = {
-        "n_fft": dft_window_size,
-        "hop_length": hop_length,
-        "n_mels": 128,
-        "center": True,
-    }
+    arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "n_mels": 128}
     print("==================================")
     print("Features used: ")
     print(f"Log mel spectogram: {log_mel}")

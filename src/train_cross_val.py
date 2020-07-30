@@ -50,12 +50,7 @@ def train_model(
         ([2, 3, 4, 5], [1]),
     ]
     total_accuracy = 0
-    arguments = {
-        "n_fft": dft_window_size,
-        "hop_length": hop_length,
-        "n_mels": 128,
-        "center": True,
-    }
+    arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "n_mels": 128}
     print("==================================")
     print("Features used: ")
     print(f"Log mel spectogram: {log_mel}")
