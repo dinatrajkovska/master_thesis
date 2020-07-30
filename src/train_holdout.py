@@ -60,7 +60,7 @@ def train_model(
     print("=====================")
     train_dataset = AudioDataset(
         dataset_path,
-        [1, 2, 3],
+        [1, 2, 3, 4],
         sampling_rate,
         arguments,
         log_mel,
@@ -69,7 +69,7 @@ def train_model(
         cqt,
     )
     val_dataset = AudioDataset(
-        dataset_path, [4], sampling_rate, arguments, log_mel, delta_log_mel, mfcc, cqt
+        dataset_path, [5], sampling_rate, arguments, log_mel, delta_log_mel, mfcc, cqt
     )
 
     train_loader = DataLoader(
@@ -134,7 +134,7 @@ def train_model(
                     f"Best on epoch {epoch+1} with accuracy {best_accuracy}! Saving..."
                 )
                 print("===========================")
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
             else:
                 print(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
