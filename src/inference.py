@@ -23,6 +23,9 @@ def inference(
     dataset_name,
     dft_window_size,
     hop_length,
+    log_mel,
+    delta_log_mel,
+    mfcc,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"-------- Using device {device} --------")
@@ -36,14 +39,19 @@ def inference(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    test_dataset = AudioDataset(
-        dataset_path, [5], sampling_rate, dft_window_size, hop_length
-    )
+    arguments = {
+        "n_fft": dft_window_size,
+        "hop_length": hop_length,
+        "n_mels": 128,
+        "center": False,
+    }
+    test_dataset = AudioDataset(dataset_path, [5], sampling_rate, arguments)
     print(f"Inference on {len(test_dataset)} samples.")
 
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
     # Model
-    model = get_seq_model().to(device)
+    in_features = np.sum([log_mel, delta_log_mel, mfcc])
+    model = get_seq_model(in_features).to(device)
     model.load_state_dict(torch.load(checkpoint_path))
     # Set model in evaluation mode
     model.train(False)
@@ -77,6 +85,9 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument("--dft_window_size", default=512, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
+    parser.add_argument("--mfcc", action="store_true")
+    parser.add_argument("--log_mel", action="store_true")
+    parser.add_argument("--delta_log_mel", action="store_true")
     args = parser.parse_args()
     inference(
         args.batch_size,

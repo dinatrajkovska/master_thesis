@@ -10,7 +10,14 @@ import os
 
 class AudioDataset(torch.utils.data.Dataset):
     def __init__(
-        self, directory_path, dataset_folds, sampling_rate, dft_window_size, hop_length
+        self,
+        directory_path,
+        dataset_folds,
+        sampling_rate,
+        arguments,
+        log_mel,
+        delta_log_mel,
+        mfcc,
     ):
         self.audios = []
         self.targets = []
@@ -26,38 +33,69 @@ class AudioDataset(torch.utils.data.Dataset):
             self.targets.append(
                 int(filename.split("/")[-1].split(".")[0].split("-")[-1])
             )
-        self.dft_window_size = dft_window_size
-        self.hop_length = hop_length
+        self.arguments = arguments
+        self.log_mel = log_mel
+        self.delta_log_mel = delta_log_mel
+        self.mfcc = mfcc
 
     def __getitem__(self, idx):
         audio = self.audios[idx]
         # Extract stft
+        features = []
+        if self.log_mel:
+            log_mel_spectrogram = self.log_mel_spectrogram(audio)
+            # Normalize - min max norm
+            log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
+            log_mel_spectrogram = np.expand_dims(log_mel_spectrogram, axis=0)
+            features.append(log_mel_spectrogram)
+        if self.delta_log_mel:
+            log_mel_spectrogram = self.log_mel_spectrogram(audio)
+            # Normalize - min max norm
+            log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
+            # Compute delta log mel spectrogram
+            delta_log_mel_spectrogram = librosa.feature.delta(
+                log_mel_spectrogram, axis=0
+            )
+            # Expand dims
+            delta_log_mel_spectrogram = np.expand_dims(
+                delta_log_mel_spectrogram, axis=0
+            )
+            features.append(delta_log_mel_spectrogram)
+        if self.mfcc:
+            mel_frequency_coefficients = librosa.feature.mfcc(
+                y=audio, n_mfcc=128, **self.arguments
+            )
+            mel_frequency_coefficients = self.min_max_normalize(
+                mel_frequency_coefficients
+            )
+            mel_frequency_coefficients = mel_frequency_coefficients.T
+            mel_frequency_coefficients = np.expand_dims(
+                mel_frequency_coefficients, axis=0
+            )
+            features.append(mel_frequency_coefficients)
+
+        return np.concatenate(features, axis=0), self.targets[idx]
+
+    def log_mel_spectrogram(self, audio):
         spectrogram = librosa.core.stft(
-            audio, n_fft=self.dft_window_size, hop_length=self.hop_length, center=False
+            audio,
+            n_fft=self.arguments["n_fft"],
+            hop_length=self.arguments["hop_length"],
+            center=self.arguments["center"],
         )
         # Convert to mel spectrogram
         mel_spectrogram = librosa.feature.melspectrogram(
             S=np.abs(spectrogram) ** 2,
-            n_fft=self.dft_window_size,
-            hop_length=self.hop_length,
-            n_mels=128,
+            n_fft=self.arguments["n_fft"],
+            hop_length=self.arguments["hop_length"],
+            n_mels=self.arguments["n_mels"],
         )
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
-        log_mel_spectrogram = log_mel_spectrogram.T
-        log_mel_spectrogram = np.array(log_mel_spectrogram, dtype=np.float32)
-        # Normalize - min max norm
-        log_mel_spectrogram = (log_mel_spectrogram - np.min(log_mel_spectrogram)) / (
-            np.max(log_mel_spectrogram) - np.min(log_mel_spectrogram)
-        )
-        # Compute delta log mel spectrogram
-        delta_log_mel_spectrogram = librosa.feature.delta(log_mel_spectrogram, axis=0)
-        # Find target class number
+        return log_mel_spectrogram.T
 
-        log_mel_spectrogram = np.expand_dims(log_mel_spectrogram, axis=0)
-        delta_log_mel_spectrogram = np.expand_dims(delta_log_mel_spectrogram, axis=0)
-        return (
-            np.concatenate([log_mel_spectrogram, delta_log_mel_spectrogram], axis=0),
-            self.targets[idx],
+    def min_max_normalize(self, spectrogram):
+        return (spectrogram - np.min(spectrogram)) / (
+            np.max(spectrogram) - np.min(spectrogram)
         )
 
     def __len__(self):

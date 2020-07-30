@@ -22,6 +22,9 @@ def train_model(
     batch_size,
     epochs,
     save_model_path,
+    log_mel,
+    delta_log_mel,
+    mfcc,
     sampling_rate,
     dataset_name,
     dft_window_size,
@@ -41,11 +44,23 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
+    arguments = {
+        "n_fft": dft_window_size,
+        "hop_length": hop_length,
+        "n_mels": 128,
+        "center": False,
+    }
+    print("=====================")
+    print("Features used: ")
+    print(f"Log mel spectogram: {log_mel}")
+    print(f"Delta log mel spectogram: {delta_log_mel}")
+    print(f"Mel-frequency cepstral coefficients: {mfcc}")
+    print("=====================")
     train_dataset = AudioDataset(
-        dataset_path, [1, 2, 3], sampling_rate, dft_window_size, hop_length
+        dataset_path, [1, 2, 3], sampling_rate, arguments, log_mel, delta_log_mel, mfcc
     )
     val_dataset = AudioDataset(
-        dataset_path, [4], sampling_rate, dft_window_size, hop_length
+        dataset_path, [4], sampling_rate, arguments, log_mel, delta_log_mel, mfcc
     )
 
     train_loader = DataLoader(
@@ -55,7 +70,8 @@ def train_model(
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
 
     ### One option is to create a Sequential model.
-    model = get_seq_model().to(device)
+    in_features = np.sum([log_mel, delta_log_mel, mfcc])
+    model = get_seq_model(in_features).to(device)
 
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(
@@ -114,12 +130,15 @@ def train_model(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser = argparse.ArgumentParser(description="Train on holdout.")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--learning_rate", default=0.01, type=float)
     parser.add_argument("--weight_decay", default=0.01, type=float)
     parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
+    parser.add_argument("--mfcc", action="store_true")
+    parser.add_argument("--log_mel", action="store_true")
+    parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument("--dft_window_size", default=512, type=int)
@@ -129,6 +148,9 @@ if __name__ == "__main__":
         args.batch_size,
         args.epochs,
         args.save_model_path,
+        args.log_mel,
+        args.delta_log_mel,
+        args.mfcc,
         args.sampling_rate,
         args.dataset_name,
         args.dft_window_size,

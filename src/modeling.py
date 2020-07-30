@@ -1,11 +1,15 @@
 from torch import nn
 
 
-def get_seq_model():
+def get_seq_model(in_features):
     return nn.Sequential(
         # Block 1
         nn.Conv2d(
-            in_channels=2, out_channels=32, kernel_size=(1, 3), stride=1, padding=(0, 1)
+            in_channels=in_features,
+            out_channels=32,
+            kernel_size=(1, 3),
+            stride=1,
+            padding=(0, 1),
         ),
         nn.Conv2d(
             in_channels=32,

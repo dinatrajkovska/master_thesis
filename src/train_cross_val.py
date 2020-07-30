@@ -46,14 +46,16 @@ def train_model(
         ([2, 3, 4, 5], [1]),
     ]
     total_accuracy = 0
+    arguments = {
+        "n_fft": dft_window_size,
+        "hop_length": hop_length,
+        "n_mels": 128,
+        "center": False,
+    }
     for split_num, split in enumerate(data_splits):
         print(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = AudioDataset(
-            dataset_path, split[0], sampling_rate, dft_window_size, hop_length
-        )
-        test_dataset = AudioDataset(
-            dataset_path, split[1], sampling_rate, dft_window_size, hop_length
-        )
+        train_dataset = AudioDataset(dataset_path, split[0], sampling_rate, arguments)
+        test_dataset = AudioDataset(dataset_path, split[1], sampling_rate, arguments)
 
         train_loader = DataLoader(
             train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
