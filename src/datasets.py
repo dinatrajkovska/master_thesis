@@ -74,7 +74,7 @@ class AudioDataset(torch.utils.data.Dataset):
             )
             features.append(mel_frequency_coefficients)
 
-        return np.concatenate(features, axis=0), self.targets[idx]
+        return np.concatenate(features, axis=0).astype(np.float32), self.targets[idx]
 
     def log_mel_spectrogram(self, audio):
         spectrogram = librosa.core.stft(
