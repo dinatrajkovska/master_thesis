@@ -82,7 +82,10 @@ class AudioDataset(torch.utils.data.Dataset):
             # https://librosa.org/doc/latest/generated/librosa.feature.chroma_cqt.html
             # https://stackoverflow.com/questions/43838718/how-can-i-extract-cqt-from-audio-with-sampling-rate-8000hz-librosa
             constant_q = librosa.feature.chroma_cqt(
-                y=audio, hop_length=512, n_chroma=128, bins_per_octave=128
+                y=audio,
+                hop_length=self.arguments["hop_length"],
+                n_chroma=128,
+                bins_per_octave=128,
             )
             constant_q = constant_q.T
             constant_q = self.min_max_normalize(constant_q)
@@ -100,7 +103,7 @@ class AudioDataset(torch.utils.data.Dataset):
                 S=np.abs(spectrogram) ** 2,
                 n_fft=self.arguments["n_fft"],
                 hop_length=self.arguments["hop_length"],
-                n_chroma=self.arguments["n_mels"],
+                n_chroma=128,
             )
             chroma = chroma.T
             chroma = self.min_max_normalize(chroma)

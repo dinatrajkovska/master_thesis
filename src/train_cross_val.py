@@ -23,7 +23,6 @@ def train_model(
     batch_size,
     epochs,
     learning_rate,
-    weight_decay,
     log_mel,
     delta_log_mel,
     mfcc,
@@ -103,9 +102,7 @@ def train_model(
         model = get_seq_model(in_features).to(device)
 
         criterion = nn.NLLLoss()
-        optimizer = optim.Adam(
-            model.parameters(), lr=learning_rate, weight_decay=weight_decay
-        )
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
         print(
             f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
@@ -158,7 +155,6 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--learning_rate", default=0.01, type=float)
-    parser.add_argument("--weight_decay", default=0.01, type=float)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)
@@ -174,7 +170,6 @@ if __name__ == "__main__":
         args.batch_size,
         args.epochs,
         args.learning_rate,
-        args.weight_decay,
         args.log_mel,
         args.delta_log_mel,
         args.mfcc,

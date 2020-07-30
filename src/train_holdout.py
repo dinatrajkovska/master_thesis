@@ -32,7 +32,6 @@ def train_model(
     dft_window_size,
     hop_length,
     learning_rate,
-    weight_decay,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"-------- Using device {device} --------")
@@ -95,9 +94,7 @@ def train_model(
     model = get_seq_model(in_features).to(device)
 
     criterion = nn.NLLLoss()
-    optimizer = optim.Adam(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
-    )
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     print(f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples.")
 
@@ -154,7 +151,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train on holdout.")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--learning_rate", default=0.01, type=float)
-    parser.add_argument("--weight_decay", default=0.01, type=float)
     parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--mfcc", action="store_true")
@@ -181,5 +177,4 @@ if __name__ == "__main__":
         args.dft_window_size,
         args.hop_length,
         args.learning_rate,
-        args.weight_decay,
     )
