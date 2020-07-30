@@ -104,6 +104,7 @@ class AudioDataset(torch.utils.data.Dataset):
                 n_fft=self.arguments["n_fft"],
                 hop_length=self.arguments["hop_length"],
                 n_chroma=128,
+                norm=None,
             )
             chroma = chroma.T
             chroma = self.min_max_normalize(chroma)
