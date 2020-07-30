@@ -12,19 +12,22 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
+import os
 
 from datasets import AudioDataset
-from modeling import AttentionModel
+from modeling import get_seq_model
 
 
 def train_model(
-    num_classes,
+    dataset_name,
     batch_size,
     epochs,
     learning_rate,
     weight_decay,
+    log_mel,
+    delta_log_mel,
+    mfcc,
     sampling_rate,
-    dataset_path,
     dft_window_size,
     hop_length,
 ):
@@ -50,12 +53,35 @@ def train_model(
         "n_fft": dft_window_size,
         "hop_length": hop_length,
         "n_mels": 128,
-        "center": False,
+        "center": True,
     }
+    print("=====================")
+    print("Features used: ")
+    print(f"Log mel spectogram: {log_mel}")
+    print(f"Delta log mel spectogram: {delta_log_mel}")
+    print(f"Mel-frequency cepstral coefficients: {mfcc}")
+    print("=====================")
+    dataset_path = os.path.join("data", dataset_name)
     for split_num, split in enumerate(data_splits):
         print(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = AudioDataset(dataset_path, split[0], sampling_rate, arguments)
-        test_dataset = AudioDataset(dataset_path, split[1], sampling_rate, arguments)
+        train_dataset = AudioDataset(
+            dataset_path,
+            split[0],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+        )
+        test_dataset = AudioDataset(
+            dataset_path,
+            split[1],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+        )
 
         train_loader = DataLoader(
             train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
@@ -64,7 +90,8 @@ def train_model(
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
         ### One option is to create a Sequential model.
-        model = AttentionModel().to(device)
+        in_features = np.sum([log_mel, delta_log_mel, mfcc])
+        model = get_seq_model(in_features).to(device)
 
         criterion = nn.NLLLoss()
         optimizer = optim.Adam(
@@ -124,17 +151,23 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", default=0.01, type=float)
     parser.add_argument("--weight_decay", default=0.01, type=float)
     parser.add_argument("--sampling_rate", default=None, type=int)
-    parser.add_argument("--dataset_path", default="data/data_50", type=str)
+    parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
+    parser.add_argument("--mfcc", action="store_true")
+    parser.add_argument("--log_mel", action="store_true")
+    parser.add_argument("--delta_log_mel", action="store_true")
     args = parser.parse_args()
     train_model(
+        args.dataset_name,
         args.batch_size,
         args.epochs,
         args.learning_rate,
         args.weight_decay,
+        args.log_mel,
+        args.delta_log_mel,
+        args.mfcc,
         args.sampling_rate,
-        args.dataset_path,
         args.dft_window_size,
         args.hop_length,
     )

@@ -43,7 +43,7 @@ def inference(
         "n_fft": dft_window_size,
         "hop_length": hop_length,
         "n_mels": 128,
-        "center": False,
+        "center": True,
     }
     test_dataset = AudioDataset(dataset_path, [5], sampling_rate, arguments)
     print(f"Inference on {len(test_dataset)} samples.")

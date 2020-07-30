@@ -18,6 +18,7 @@ class AudioDataset(torch.utils.data.Dataset):
         log_mel,
         delta_log_mel,
         mfcc,
+        cqt,
     ):
         self.audios = []
         self.targets = []
@@ -37,6 +38,7 @@ class AudioDataset(torch.utils.data.Dataset):
         self.log_mel = log_mel
         self.delta_log_mel = delta_log_mel
         self.mfcc = mfcc
+        self.cqt = cqt
 
     def __getitem__(self, idx):
         audio = self.audios[idx]
@@ -73,6 +75,18 @@ class AudioDataset(torch.utils.data.Dataset):
                 mel_frequency_coefficients, axis=0
             )
             features.append(mel_frequency_coefficients)
+        if self.cqt:
+            constant_q = librosa.core.cqt(
+                audio,
+                hop_length=self.arguments["hop_length"],
+                n_bins=self.arguments["n_mels"],
+                bins_per_octave=16,
+            )
+            constant_q = np.abs(constant_q)
+            constant_q = constant_q.T
+            constant_q = self.min_max_normalize(constant_q)
+            constant_q = np.expand_dims(constant_q, axis=0)
+            features.append(constant_q)
 
         return np.concatenate(features, axis=0).astype(np.float32), self.targets[idx]
 
