@@ -66,6 +66,7 @@ class AudioDataset(torch.utils.data.Dataset):
             )
             features.append(delta_log_mel_spectrogram)
         if self.mfcc:
+            # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
             mel_frequency_coefficients = librosa.feature.mfcc(
                 y=audio, n_mfcc=128, **self.arguments
             )
@@ -78,22 +79,25 @@ class AudioDataset(torch.utils.data.Dataset):
             )
             features.append(mel_frequency_coefficients)
         if self.cqt:
+            # https://librosa.org/doc/latest/generated/librosa.feature.chroma_cqt.html
             # https://stackoverflow.com/questions/43838718/how-can-i-extract-cqt-from-audio-with-sampling-rate-8000hz-librosa
-            constant_q = librosa.core.cqt(
-                audio,
-                hop_length=self.arguments["hop_length"],
-                n_bins=self.arguments["n_mels"],
-                bins_per_octave=16,
+            constant_q = librosa.feature.chroma_cqt(
+                y=audio, hop_length=512, n_chroma=128, bins_per_octave=128
             )
-            constant_q = np.abs(constant_q) ** 2
             constant_q = constant_q.T
             constant_q = self.min_max_normalize(constant_q)
             constant_q = np.expand_dims(constant_q, axis=0)
             features.append(constant_q)
         if self.chromagram:
+            # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
+            spectrogram = librosa.core.stft(
+                audio,
+                n_fft=self.arguments["n_fft"],
+                hop_length=self.arguments["hop_length"],
+                center=self.arguments["center"],
+            )
             chroma = librosa.feature.chroma_stft(
-                y=audio,
-                norm=None,
+                S=np.abs(spectrogram) ** 2,
                 n_fft=self.arguments["n_fft"],
                 hop_length=self.arguments["hop_length"],
                 n_chroma=self.arguments["n_mels"],

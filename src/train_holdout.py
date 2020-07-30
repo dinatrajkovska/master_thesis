@@ -164,7 +164,7 @@ if __name__ == "__main__":
     parser.add_argument("--chroma", action="store_true")
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
-    parser.add_argument("--dft_window_size", default=512, type=int)
+    parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     args = parser.parse_args()
     train_model(
