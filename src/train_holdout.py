@@ -26,6 +26,7 @@ def train_model(
     delta_log_mel,
     mfcc,
     cqt,
+    chroma,
     sampling_rate,
     dataset_name,
     dft_window_size,
@@ -51,13 +52,14 @@ def train_model(
         "n_mels": 128,
         "center": True,
     }
-    print("=====================")
+    print("==================================")
     print("Features used: ")
     print(f"Log mel spectogram: {log_mel}")
     print(f"Delta log mel spectogram: {delta_log_mel}")
     print(f"Mel-frequency cepstral coefficients: {mfcc}")
     print(f"Constant-Q transform: {cqt}")
-    print("=====================")
+    print(f"STFT chromagram: {chroma}")
+    print("==================================")
     train_dataset = AudioDataset(
         dataset_path,
         [1, 2, 3, 4],
@@ -67,9 +69,18 @@ def train_model(
         delta_log_mel,
         mfcc,
         cqt,
+        chroma,
     )
     val_dataset = AudioDataset(
-        dataset_path, [5], sampling_rate, arguments, log_mel, delta_log_mel, mfcc, cqt
+        dataset_path,
+        [5],
+        sampling_rate,
+        arguments,
+        log_mel,
+        delta_log_mel,
+        mfcc,
+        cqt,
+        chroma,
     )
 
     train_loader = DataLoader(
@@ -79,7 +90,7 @@ def train_model(
     val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
 
     ### One option is to create a Sequential model.
-    in_features = np.sum([log_mel, delta_log_mel, mfcc, cqt])
+    in_features = np.sum([log_mel, delta_log_mel, mfcc, cqt, chroma])
     assert in_features > 0
     model = get_seq_model(in_features).to(device)
 
@@ -150,6 +161,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_mel", action="store_true")
     parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--cqt", action="store_true")
+    parser.add_argument("--chroma", action="store_true")
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument("--dft_window_size", default=512, type=int)
@@ -163,6 +175,7 @@ if __name__ == "__main__":
         args.delta_log_mel,
         args.mfcc,
         args.cqt,
+        args.chroma,
         args.sampling_rate,
         args.dataset_name,
         args.dft_window_size,

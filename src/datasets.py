@@ -19,6 +19,7 @@ class AudioDataset(torch.utils.data.Dataset):
         delta_log_mel,
         mfcc,
         cqt,
+        chromagram,
     ):
         self.audios = []
         self.targets = []
@@ -39,6 +40,7 @@ class AudioDataset(torch.utils.data.Dataset):
         self.delta_log_mel = delta_log_mel
         self.mfcc = mfcc
         self.cqt = cqt
+        self.chromagram = chromagram
 
     def __getitem__(self, idx):
         audio = self.audios[idx]
@@ -76,17 +78,30 @@ class AudioDataset(torch.utils.data.Dataset):
             )
             features.append(mel_frequency_coefficients)
         if self.cqt:
+            # https://stackoverflow.com/questions/43838718/how-can-i-extract-cqt-from-audio-with-sampling-rate-8000hz-librosa
             constant_q = librosa.core.cqt(
                 audio,
                 hop_length=self.arguments["hop_length"],
                 n_bins=self.arguments["n_mels"],
                 bins_per_octave=16,
             )
-            constant_q = np.abs(constant_q)
+            constant_q = np.abs(constant_q) ** 2
             constant_q = constant_q.T
             constant_q = self.min_max_normalize(constant_q)
             constant_q = np.expand_dims(constant_q, axis=0)
             features.append(constant_q)
+        if self.chromagram:
+            chroma = librosa.feature.chroma_stft(
+                y=audio,
+                norm=None,
+                n_fft=self.arguments["n_fft"],
+                hop_length=self.arguments["hop_length"],
+                n_chroma=self.arguments["n_mels"],
+            )
+            chroma = chroma.T
+            chroma = self.min_max_normalize(chroma)
+            chroma = np.expand_dims(chroma, axis=0)
+            features.append(chroma)
 
         return np.concatenate(features, axis=0).astype(np.float32), self.targets[idx]
 

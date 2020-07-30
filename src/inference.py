@@ -26,6 +26,8 @@ def inference(
     log_mel,
     delta_log_mel,
     mfcc,
+    cqt,
+    chroma,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"-------- Using device {device} --------")
@@ -45,12 +47,21 @@ def inference(
         "n_mels": 128,
         "center": True,
     }
+    print("==================================")
+    print("Features used: ")
+    print(f"Log mel spectogram: {log_mel}")
+    print(f"Delta log mel spectogram: {delta_log_mel}")
+    print(f"Mel-frequency cepstral coefficients: {mfcc}")
+    print(f"Constant-Q transform: {cqt}")
+    print(f"STFT chromagram: {chroma}")
+    print("==================================")
     test_dataset = AudioDataset(dataset_path, [5], sampling_rate, arguments)
     print(f"Inference on {len(test_dataset)} samples.")
 
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
     # Model
-    in_features = np.sum([log_mel, delta_log_mel, mfcc])
+    in_features = np.sum([log_mel, delta_log_mel, mfcc, cqt, chroma])
+    assert in_features > 0
     model = get_seq_model(in_features).to(device)
     model.load_state_dict(torch.load(checkpoint_path))
     # Set model in evaluation mode
@@ -88,6 +99,8 @@ if __name__ == "__main__":
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--log_mel", action="store_true")
     parser.add_argument("--delta_log_mel", action="store_true")
+    parser.add_argument("--cqt", action="store_true")
+    parser.add_argument("--chroma", action="store_true")
     args = parser.parse_args()
     inference(
         args.batch_size,
@@ -96,4 +109,9 @@ if __name__ == "__main__":
         args.dataset_name,
         args.dft_window_size,
         args.hop_length,
+        args.log_mel,
+        args.delta_log_mel,
+        args.mfcc,
+        args.cqt,
+        args.chroma,
     )

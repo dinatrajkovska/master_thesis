@@ -27,6 +27,8 @@ def train_model(
     log_mel,
     delta_log_mel,
     mfcc,
+    cqt,
+    chroma,
     sampling_rate,
     dft_window_size,
     hop_length,
@@ -55,12 +57,14 @@ def train_model(
         "n_mels": 128,
         "center": True,
     }
-    print("=====================")
+    print("==================================")
     print("Features used: ")
     print(f"Log mel spectogram: {log_mel}")
     print(f"Delta log mel spectogram: {delta_log_mel}")
     print(f"Mel-frequency cepstral coefficients: {mfcc}")
-    print("=====================")
+    print(f"Constant-Q transform: {cqt}")
+    print(f"STFT chromagram: {chroma}")
+    print("==================================")
     dataset_path = os.path.join("data", dataset_name)
     for split_num, split in enumerate(data_splits):
         print(f"----------- Starting split number {split_num + 1} -----------")
@@ -72,6 +76,8 @@ def train_model(
             log_mel,
             delta_log_mel,
             mfcc,
+            cqt,
+            chroma,
         )
         test_dataset = AudioDataset(
             dataset_path,
@@ -81,6 +87,8 @@ def train_model(
             log_mel,
             delta_log_mel,
             mfcc,
+            cqt,
+            chroma,
         )
 
         train_loader = DataLoader(
@@ -90,7 +98,8 @@ def train_model(
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
 
         ### One option is to create a Sequential model.
-        in_features = np.sum([log_mel, delta_log_mel, mfcc])
+        in_features = np.sum([log_mel, delta_log_mel, mfcc, cqt, chroma])
+        assert in_features > 0
         model = get_seq_model(in_features).to(device)
 
         criterion = nn.NLLLoss()
@@ -155,6 +164,8 @@ if __name__ == "__main__":
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--mfcc", action="store_true")
+    parser.add_argument("--cqt", action="store_true")
+    parser.add_argument("--chroma", action="store_true")
     parser.add_argument("--log_mel", action="store_true")
     parser.add_argument("--delta_log_mel", action="store_true")
     args = parser.parse_args()
@@ -167,6 +178,8 @@ if __name__ == "__main__":
         args.log_mel,
         args.delta_log_mel,
         args.mfcc,
+        args.cqt,
+        args.chroma,
         args.sampling_rate,
         args.dft_window_size,
         args.hop_length,
