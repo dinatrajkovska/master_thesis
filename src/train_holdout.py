@@ -92,6 +92,7 @@ def train_model(
     print(f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples.")
 
     best_accuracy = -1
+    best_epoch = -1
     for epoch in range(epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -131,6 +132,7 @@ def train_model(
             cur_accuracy = accuracy_score(targets, predictions)
             if cur_accuracy > best_accuracy:
                 best_accuracy = cur_accuracy
+                best_epoch = epoch + 1
                 print("===========================")
                 print(
                     f"Best on epoch {epoch+1} with accuracy {best_accuracy}! Saving..."
@@ -139,6 +141,10 @@ def train_model(
                 torch.save(model.state_dict(), save_model_path)
             else:
                 print(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
+
+    print("===========================")
+    print(f"Best total accuracy: {best_accuracy} on epoch {best_epoch}")
+    print("===========================")
 
 
 if __name__ == "__main__":

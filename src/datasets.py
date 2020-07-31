@@ -29,6 +29,7 @@ class AudioDataset(torch.utils.data.Dataset):
             (audio, sr) = librosa.load(
                 os.path.join(directory_path, filename), sr=sampling_rate
             )
+            arguments["sr"] = sr
             if audio.ndim > 1:
                 audio = np.mean(audio, axis=1)
             features = []
@@ -57,7 +58,7 @@ class AudioDataset(torch.utils.data.Dataset):
                 # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
                 log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
                 mel_frequency_coefficients = librosa.feature.mfcc(
-                    S=log_mel_spectrogram, n_mfcc=128
+                    S=log_mel_spectrogram, n_mfcc=128, sr=arguments["sr"]
                 ).T
                 mel_frequency_coefficients = self.min_max_normalize(
                     mel_frequency_coefficients
@@ -71,6 +72,7 @@ class AudioDataset(torch.utils.data.Dataset):
                 # https://stackoverflow.com/questions/43838718/how-can-i-extract-cqt-from-audio-with-sampling-rate-8000hz-librosa
                 constant_q = librosa.feature.chroma_cqt(
                     y=audio,
+                    sr=arguments["sr"],
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
                     bins_per_octave=128,
@@ -84,6 +86,7 @@ class AudioDataset(torch.utils.data.Dataset):
                 )
                 chroma = librosa.feature.chroma_stft(
                     S=np.abs(spectrogram) ** 2,
+                    sr=arguments["sr"],
                     n_fft=arguments["n_fft"],
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
@@ -107,6 +110,7 @@ class AudioDataset(torch.utils.data.Dataset):
         # Convert to mel spectrogram
         mel_spectrogram = librosa.feature.melspectrogram(
             S=np.abs(spectrogram) ** 2,
+            sr=arguments["sr"],
             n_fft=arguments["n_fft"],
             hop_length=arguments["hop_length"],
             n_mels=arguments["n_mels"],
