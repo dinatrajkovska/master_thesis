@@ -55,11 +55,10 @@ class AudioDataset(torch.utils.data.Dataset):
                 # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
                 mel_frequency_coefficients = librosa.feature.mfcc(
                     y=audio, n_mfcc=128, **arguments
-                )
+                ).T
                 mel_frequency_coefficients = self.min_max_normalize(
                     mel_frequency_coefficients
                 )
-                mel_frequency_coefficients = mel_frequency_coefficients.T
                 mel_frequency_coefficients = np.expand_dims(
                     mel_frequency_coefficients, axis=0
                 )
@@ -72,8 +71,7 @@ class AudioDataset(torch.utils.data.Dataset):
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
                     bins_per_octave=128,
-                )
-                constant_q = constant_q.T
+                ).T
                 constant_q = self.min_max_normalize(constant_q)
                 constant_q = np.expand_dims(constant_q, axis=0)
                 features.append(constant_q)
@@ -87,8 +85,7 @@ class AudioDataset(torch.utils.data.Dataset):
                     n_fft=arguments["n_fft"],
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
-                )
-                chroma = chroma.T
+                ).T
                 chroma = self.min_max_normalize(chroma)
                 chroma = np.expand_dims(chroma, axis=0)
                 features.append(chroma)
