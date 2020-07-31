@@ -13,19 +13,20 @@ requirements	= (CUDAGlobalMemoryMb >= 7500) && (CUDACapability >= 3.5) && (has_a
 
 # Execute job as a nice user
 NiceUser = true
+# Mail me only if something is wrong
+Notification = Error
 
-Notification = Never
 # Start job from current directory
-initialdir = ../
-
+initialdir = /users/students/r0691656/r0691656/exp/master_thesis/condor
 # Execute shell file
-executable = create_environment.sh
-# Define argument for shell file
-arguments = "src/train_cross_val.py"
+executable = /users/students/r0691656/r0691656/exp/master_thesis/condor/train_cross_val.sh
 
 # Define paths for log, output and error files, allowing you to debug and read output of your jobs.
-Log          = condor/test.log
-Output       = condor/test.out
-Error        = condor/test.err
+Log          = condor/cross_val_logmel.log
+Output       = condor/cross_val_logmel.out
+Error        = condor/cross_val_logmel.err
 
-Queue
+should_transfer_files = YES
+
+# Start just 1 instance of the job
+Queue 1

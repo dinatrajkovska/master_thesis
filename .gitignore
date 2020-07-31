@@ -5,6 +5,4 @@ notebooks/
 .DS_Store
 .vscode/
 __pycache__/
-condor/test.err
-condor/test.log
-condor/test.out
+condor/*
