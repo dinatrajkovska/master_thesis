@@ -41,7 +41,7 @@ class AudioDataset(torch.utils.data.Dataset):
                 features.append(log_mel_spectrogram)
             if delta_log_mel:
                 # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
-                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
+                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments).T
                 # Normalize - min max norm
                 log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
                 # Compute delta log mel spectrogram

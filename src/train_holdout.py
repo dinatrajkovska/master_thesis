@@ -77,11 +77,9 @@ def train_model(
         chroma,
     )
 
-    train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
-    )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
     ### One option is to create a Sequential model.
     in_features = np.sum([log_mel, delta_log_mel, mfcc, cqt, chroma])

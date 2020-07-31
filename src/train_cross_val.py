@@ -20,17 +20,17 @@ from modeling import get_seq_model
 
 def train_model(
     dataset_name,
-    batch_size,
-    epochs,
-    learning_rate,
+    sampling_rate,
+    dft_window_size,
+    hop_length,
     log_mel,
     delta_log_mel,
     mfcc,
     cqt,
     chroma,
-    sampling_rate,
-    dft_window_size,
-    hop_length,
+    learning_rate,
+    batch_size,
+    epochs,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
@@ -85,11 +85,9 @@ def train_model(
             chroma,
         )
 
-        train_loader = DataLoader(
-            train_dataset, batch_size=batch_size, shuffle=True, num_workers=4
-        )
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
         ### One option is to create a Sequential model.
         in_features = np.sum([log_mel, delta_log_mel, mfcc, cqt, chroma])
