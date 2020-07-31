@@ -75,7 +75,6 @@ class AudioDataset(torch.utils.data.Dataset):
                     n_chroma=128,
                     bins_per_octave=128,
                 ).T
-                constant_q = self.min_max_normalize(constant_q)
                 constant_q = np.expand_dims(constant_q, axis=0)
                 features.append(constant_q)
             if chromagram:
@@ -89,7 +88,6 @@ class AudioDataset(torch.utils.data.Dataset):
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
                 ).T
-                chroma = self.min_max_normalize(chroma)
                 chroma = np.expand_dims(chroma, axis=0)
                 features.append(chroma)
 
@@ -116,10 +114,8 @@ class AudioDataset(torch.utils.data.Dataset):
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
         return log_mel_spectrogram
 
-    def min_max_normalize(self, spectrogram):
-        return (spectrogram - np.min(spectrogram)) / (
-            np.max(spectrogram) - np.min(spectrogram)
-        )
+    def min_max_normalize(self, X):
+        return (X - np.min(X)) / (np.max(X) - np.min(X))
 
     def __len__(self):
         return len(self.targets)
