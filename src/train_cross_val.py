@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 import argparse
 import os
@@ -61,33 +61,27 @@ def train_model(
     dataset_path = os.path.join("data", dataset_name)
     for split_num, split in enumerate(data_splits):
         print(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = Subset(
-            AudioDataset(
-                dataset_path,
-                split[0],
-                sampling_rate,
-                arguments,
-                log_mel,
-                delta_log_mel,
-                mfcc,
-                cqt,
-                chroma,
-            ),
-            [0, 1, 2, 3],
+        train_dataset = AudioDataset(
+            dataset_path,
+            split[0],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+            cqt,
+            chroma,
         )
-        test_dataset = Subset(
-            AudioDataset(
-                dataset_path,
-                split[1],
-                sampling_rate,
-                arguments,
-                log_mel,
-                delta_log_mel,
-                mfcc,
-                cqt,
-                chroma,
-            ),
-            [0, 1, 2],
+        test_dataset = AudioDataset(
+            dataset_path,
+            split[1],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+            cqt,
+            chroma,
         )
 
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
