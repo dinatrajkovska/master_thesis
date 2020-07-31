@@ -8,9 +8,8 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from sklearn.metrics import accuracy_score
-from tqdm import tqdm
 import argparse
 import os
 
@@ -62,27 +61,33 @@ def train_model(
     dataset_path = os.path.join("data", dataset_name)
     for split_num, split in enumerate(data_splits):
         print(f"----------- Starting split number {split_num + 1} -----------")
-        train_dataset = AudioDataset(
-            dataset_path,
-            split[0],
-            sampling_rate,
-            arguments,
-            log_mel,
-            delta_log_mel,
-            mfcc,
-            cqt,
-            chroma,
+        train_dataset = Subset(
+            AudioDataset(
+                dataset_path,
+                split[0],
+                sampling_rate,
+                arguments,
+                log_mel,
+                delta_log_mel,
+                mfcc,
+                cqt,
+                chroma,
+            ),
+            [0, 1, 2, 3],
         )
-        test_dataset = AudioDataset(
-            dataset_path,
-            split[1],
-            sampling_rate,
-            arguments,
-            log_mel,
-            delta_log_mel,
-            mfcc,
-            cqt,
-            chroma,
+        test_dataset = Subset(
+            AudioDataset(
+                dataset_path,
+                split[1],
+                sampling_rate,
+                arguments,
+                log_mel,
+                delta_log_mel,
+                mfcc,
+                cqt,
+                chroma,
+            ),
+            [0, 1, 2],
         )
 
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -102,27 +107,20 @@ def train_model(
         )
 
         for epoch in range(epochs):
-            print(f"Starting epoch {epoch + 1}...")
             # Set model in train mode
             model.train(True)
-            with tqdm(total=len(train_loader)) as pbar:
-                for audio, target in train_loader:
-                    # remove past gradients
-                    optimizer.zero_grad()
-                    # forward
-                    audio, target = audio.to(device), target.to(device)
-                    prediction = model(audio)
-                    # L2 regularization on the penultimate dense layer
-                    loss = (
-                        criterion(prediction, target) + model[31].weight.norm(2) * 0.1
-                    )
-                    # backward
-                    loss.backward()
-                    # update weights
-                    optimizer.step()
-                    # Update progress bar
-                    pbar.update(1)
-                    pbar.set_postfix({"Batch loss": loss.item()})
+            for audio, target in train_loader:
+                # remove past gradients
+                optimizer.zero_grad()
+                # forward
+                audio, target = audio.to(device), target.to(device)
+                prediction = model(audio)
+                # L2 regularization on the penultimate dense layer
+                loss = criterion(prediction, target) + model[31].weight.norm(2) * 0.1
+                # backward
+                loss.backward()
+                # update weights
+                optimizer.step()
 
         # Set model in evaluation mode
         model.train(False)
@@ -130,7 +128,7 @@ def train_model(
         targets = np.zeros(len(test_dataset))
         index = 0
         with torch.no_grad():
-            for audio, target in tqdm(test_loader):
+            for audio, target in test_loader:
                 audio, target = audio.to(device), target.to(device)
                 probs = model(audio)
                 pred = probs.argmax(dim=-1)
@@ -139,11 +137,11 @@ def train_model(
                 predictions[index : index + cur_batch_size] = pred.cpu().numpy()
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
-
             print(f"Test accuracy: {accuracy_score(targets, predictions)}!")
             total_accuracy += accuracy_score(targets, predictions)
-
+    print("============")
     print(f"The total accuracy is {total_accuracy / len(data_splits)}")
+    print("============")
 
 
 if __name__ == "__main__":
