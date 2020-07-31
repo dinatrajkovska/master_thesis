@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
+import logging
 
 from datasets import AudioDataset
 from modeling import get_seq_model
@@ -32,9 +33,15 @@ def train_model(
     batch_size,
     epochs,
     save_model_path,
+    log_filepath,
 ):
+    # Set up logging
+    if log_filepath:
+        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    else:
+        logging.basicConfig(level=logging.INFO)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"-------- Using device {device} --------")
+    logging.info(f"-------- Using device {device} --------")
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
     ### {fold number}-{file id}-{take number}-{target class number}
@@ -46,14 +53,14 @@ def train_model(
 
     dataset_path = os.path.join("data", dataset_name)
     arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "n_mels": 128}
-    print("==================================")
-    print("Features used: ")
-    print(f"Log mel spectogram: {log_mel}")
-    print(f"Delta log mel spectogram: {delta_log_mel}")
-    print(f"Mel-frequency cepstral coefficients: {mfcc}")
-    print(f"Constant-Q transform: {cqt}")
-    print(f"STFT chromagram: {chroma}")
-    print("==================================")
+    logging.info("==================================")
+    logging.info("Features used: ")
+    logging.info(f"Log mel spectogram: {log_mel}")
+    logging.info(f"Delta log mel spectogram: {delta_log_mel}")
+    logging.info(f"Mel-frequency cepstral coefficients: {mfcc}")
+    logging.info(f"Constant-Q transform: {cqt}")
+    logging.info(f"STFT chromagram: {chroma}")
+    logging.info("==================================")
     train_dataset = AudioDataset(
         dataset_path,
         [1, 2, 3, 4],
@@ -89,12 +96,12 @@ def train_model(
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    print(f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples.")
+    logging.info(f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples.")
 
     best_accuracy = -1
     best_epoch = -1
     for epoch in range(epochs):
-        print(f"Starting epoch {epoch + 1}...")
+        logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
@@ -133,18 +140,18 @@ def train_model(
             if cur_accuracy > best_accuracy:
                 best_accuracy = cur_accuracy
                 best_epoch = epoch + 1
-                print("===========================")
-                print(
+                logging.info("===========================")
+                logging.info(
                     f"Best on epoch {epoch+1} with accuracy {best_accuracy}! Saving..."
                 )
-                print("===========================")
+                logging.info("===========================")
                 torch.save(model.state_dict(), save_model_path)
             else:
-                print(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
+                logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
-    print("===========================")
-    print(f"Best total accuracy: {best_accuracy} on epoch {best_epoch}")
-    print("===========================")
+    logging.info("===========================")
+    logging.info(f"Best total accuracy: {best_accuracy} on epoch {best_epoch}")
+    logging.info("===========================")
 
 
 if __name__ == "__main__":
@@ -162,6 +169,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
+    parser.add_argument("--log_filepath", type=str, default=None)
     args = parser.parse_args()
     train_model(
         args.dataset_name,
@@ -177,4 +185,5 @@ if __name__ == "__main__":
         args.batch_size,
         args.epochs,
         args.save_model_path,
+        args.log_filepath,
     )

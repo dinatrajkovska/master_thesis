@@ -22,7 +22,6 @@ class AudioDataset(torch.utils.data.Dataset):
     ):
         self.inputs = []
         self.targets = []
-        print("Computing features...")
         for filename in tqdm(os.listdir(directory_path)):
             if int(filename[0]) not in dataset_folds:
                 continue

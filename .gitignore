@@ -5,4 +5,4 @@ notebooks/
 .DS_Store
 .vscode/
 __pycache__/
-condor/*
+condor/

@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 import argparse
 import os
+import logging
 
 from datasets import AudioDataset
 from modeling import get_seq_model
@@ -30,7 +31,13 @@ def train_model(
     learning_rate,
     batch_size,
     epochs,
+    log_filepath,
 ):
+    # Set up logging
+    if log_filepath:
+        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    else:
+        logging.basicConfig(level=logging.INFO)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
@@ -50,17 +57,17 @@ def train_model(
     ]
     total_accuracy = 0
     arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "n_mels": 128}
-    print("==================================")
-    print("Features used: ")
-    print(f"Log mel spectogram: {log_mel}")
-    print(f"Delta log mel spectogram: {delta_log_mel}")
-    print(f"Mel-frequency cepstral coefficients: {mfcc}")
-    print(f"Constant-Q transform: {cqt}")
-    print(f"STFT chromagram: {chroma}")
-    print("==================================")
+    logging.info("==================================")
+    logging.info("Features used: ")
+    logging.info(f"Log mel spectogram: {log_mel}")
+    logging.info(f"Delta log mel spectogram: {delta_log_mel}")
+    logging.info(f"Mel-frequency cepstral coefficients: {mfcc}")
+    logging.info(f"Constant-Q transform: {cqt}")
+    logging.info(f"STFT chromagram: {chroma}")
+    logging.info("==================================")
     dataset_path = os.path.join("data", dataset_name)
     for split_num, split in enumerate(data_splits):
-        print(f"----------- Starting split number {split_num + 1} -----------")
+        logging.info(f"----------- Starting split number {split_num + 1} -----------")
         train_dataset = AudioDataset(
             dataset_path,
             split[0],
@@ -96,7 +103,7 @@ def train_model(
         criterion = nn.NLLLoss()
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-        print(
+        logging.info(
             f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
         )
 
@@ -131,11 +138,11 @@ def train_model(
                 predictions[index : index + cur_batch_size] = pred.cpu().numpy()
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
-            print(f"Test accuracy: {accuracy_score(targets, predictions)}!")
+            logging.info(f"Test accuracy: {accuracy_score(targets, predictions)}!")
             total_accuracy += accuracy_score(targets, predictions)
-    print("============")
-    print(f"The total accuracy is {total_accuracy / len(data_splits)}")
-    print("============")
+    logging.info("============")
+    logging.info(f"The total accuracy is {total_accuracy / len(data_splits)}")
+    logging.info("============")
 
 
 if __name__ == "__main__":
@@ -152,6 +159,8 @@ if __name__ == "__main__":
     parser.add_argument("--chroma", action="store_true")
     parser.add_argument("--log_mel", action="store_true")
     parser.add_argument("--delta_log_mel", action="store_true")
+    parser.add_argument("--log_filepath", type=str, default=None)
+
     args = parser.parse_args()
     train_model(
         args.dataset_name,
@@ -166,4 +175,5 @@ if __name__ == "__main__":
         args.learning_rate,
         args.batch_size,
         args.epochs,
+        args.log_filepath,
     )

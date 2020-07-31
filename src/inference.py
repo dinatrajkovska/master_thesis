@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 from tqdm import tqdm
 import argparse
+import logging
 
 from datasets import AudioDataset
 from modeling import get_seq_model
@@ -28,9 +29,15 @@ def inference(
     chroma,
     checkpoint_path,
     batch_size,
+    log_filepath,
 ):
+    # Set up logging
+    if log_filepath:
+        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    else:
+        logging.basicConfig(level=logging.INFO)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"-------- Using device {device} --------")
+    logging.info(f"-------- Using device {device} --------")
     ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
     ### The name of each file in the directory for this data set follows a pattern:
     ### {fold number}-{file id}-{take number}-{target class number}
@@ -42,16 +49,16 @@ def inference(
 
     dataset_path = os.path.join("data", dataset_name)
     arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "n_mels": 128}
-    print("==================================")
-    print("Features used: ")
-    print(f"Log mel spectogram: {log_mel}")
-    print(f"Delta log mel spectogram: {delta_log_mel}")
-    print(f"Mel-frequency cepstral coefficients: {mfcc}")
-    print(f"Constant-Q transform: {cqt}")
-    print(f"STFT chromagram: {chroma}")
-    print("==================================")
+    logging.info("==================================")
+    logging.info("Features used: ")
+    logging.info(f"Log mel spectogram: {log_mel}")
+    logging.info(f"Delta log mel spectogram: {delta_log_mel}")
+    logging.info(f"Mel-frequency cepstral coefficients: {mfcc}")
+    logging.info(f"Constant-Q transform: {cqt}")
+    logging.info(f"STFT chromagram: {chroma}")
+    logging.info("==================================")
     test_dataset = AudioDataset(dataset_path, [5], sampling_rate, arguments)
-    print(f"Inference on {len(test_dataset)} samples.")
+    logging.info(f"Inference on {len(test_dataset)} samples.")
 
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
     # Model
@@ -73,14 +80,14 @@ def inference(
             predictions[index : index + cur_batch_size] = pred.cpu().numpy()
             targets[index : index + cur_batch_size] = target.cpu().numpy()
             index += cur_batch_size
-        print("===========================")
-        print(f"Test accuracy {accuracy_score(targets, predictions)}!")
-        print("===========================")
+        logging.info("===========================")
+        logging.info(f"Test accuracy {accuracy_score(targets, predictions)}!")
+        logging.info("===========================")
         _, recalls, _, _ = precision_recall_fscore_support(
             targets, predictions, zero_division=0
         )
         for i, recall in enumerate(recalls):
-            print(f"The accuracy for class {i}: {recall}")
+            logging.info(f"The accuracy for class {i}: {recall}")
 
 
 if __name__ == "__main__":
@@ -96,6 +103,7 @@ if __name__ == "__main__":
     parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--cqt", action="store_true")
     parser.add_argument("--chroma", action="store_true")
+    parser.add_argument("--log_filepath", type=str, default=None)
     args = parser.parse_args()
     inference(
         args.dataset_name,
@@ -109,4 +117,5 @@ if __name__ == "__main__":
         args.chroma,
         args.checkpoint_path,
         args.batch_size,
+        args.log_filepath,
     )
