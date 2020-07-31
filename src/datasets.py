@@ -33,12 +33,14 @@ class AudioDataset(torch.utils.data.Dataset):
                 audio = np.mean(audio, axis=1)
             features = []
             if log_mel:
-                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
+                # https://librosa.org/doc/latest/generated/librosa.feature.melspectrogram.html
+                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments).T
                 # Normalize - min max norm
                 log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
                 log_mel_spectrogram = np.expand_dims(log_mel_spectrogram, axis=0)
                 features.append(log_mel_spectrogram)
             if delta_log_mel:
+                # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
                 log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
                 # Normalize - min max norm
                 log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
@@ -53,8 +55,9 @@ class AudioDataset(torch.utils.data.Dataset):
                 features.append(delta_log_mel_spectrogram)
             if mfcc:
                 # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
+                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
                 mel_frequency_coefficients = librosa.feature.mfcc(
-                    y=audio, n_mfcc=128, **arguments
+                    S=log_mel_spectrogram, n_mfcc=128
                 ).T
                 mel_frequency_coefficients = self.min_max_normalize(
                     mel_frequency_coefficients
@@ -111,7 +114,7 @@ class AudioDataset(torch.utils.data.Dataset):
             n_mels=arguments["n_mels"],
         )
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
-        return log_mel_spectrogram.T
+        return log_mel_spectrogram
 
     def min_max_normalize(self, spectrogram):
         return (spectrogram - np.min(spectrogram)) / (
