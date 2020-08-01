@@ -167,9 +167,7 @@ def train_model(
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
-    logging.info("============= CLASSIFICATION REPORT START ==============")
     logging.info(f"Best total accuracy metrics on epoch {best_epoch}")
-    logging.info("============= CLASSIFICATION REPORT END ==============")
 
 
 if __name__ == "__main__":
