@@ -10,7 +10,6 @@ import torch
 from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
 import logging
@@ -151,7 +150,7 @@ def train_model(
                 if pred == target:
                     target2correct[target] += 1
 
-            cur_accuracy = accuracy_score(targets, predictions)
+            cur_accuracy = sum(target2correct.values()) / sum(target2total.values())
             if cur_accuracy > best_accuracy:
                 best_accuracy = cur_accuracy
                 best_epoch = epoch + 1
@@ -159,9 +158,9 @@ def train_model(
                 logging.info(
                     f"Best on epoch {epoch+1} with accuracy {best_accuracy}! Saving..."
                 )
-                print(sum(target2correct.values()) / sum(target2total.values()))
+                logging.info("Per-class accuracies:")
                 for target in target2total.keys():
-                    print(
+                    logging.info(
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
