@@ -130,6 +130,8 @@ def train_model(
         model.train(False)
         predictions = np.zeros(len(val_dataset))
         targets = np.zeros(len(val_dataset))
+        target2total = {}
+        target2correct = {}
         index = 0
         with torch.no_grad():
             for audio, target in tqdm(val_loader):
