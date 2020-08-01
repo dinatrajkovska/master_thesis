@@ -55,6 +55,7 @@ def train_model(
         ([2, 3, 4, 5], [1]),
     ]
     total_accuracy = 0
+    total_per_class = {}
     arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "n_mels": 128}
     logging.info("==================================")
     logging.info("Features used: ")
@@ -150,14 +151,22 @@ def train_model(
             logging.info(f"Test accuracy: {cur_accuracy}!")
             logging.info("Per-class accuracies:")
             for target in target2total.keys():
-                logging.info(
-                    f"{target2name[target]}: {target2correct[target]/target2total[target]}"
-                )
+                # Obtain class name and class accuracy
+                class_name = target2name[target]
+                class_accuracy = target2correct[target] / target2total[target]
+                logging.info(f"{class_name}: {class_accuracy}")
+                # Aggregate per class accuracies - happens only the first time
+                if class_name not in total_per_class:
+                    total_per_class[class_name] = 0
+                total_per_class[class_name] += class_accuracy
             total_accuracy += cur_accuracy
 
-    logging.info("============")
-    logging.info(f"The total accuracy is {total_accuracy / len(data_splits)}")
-    logging.info("============")
+    logging.info("=================")
+    logging.info("The averaged per-class accuracies are: ")
+    for class_name, class_accuracy in total_per_class.items():
+        logging.info(f"{class_name}: {class_accuracy / len(data_splits)}")
+    logging.info(f"The averaged accuracy is {total_accuracy / len(data_splits)}")
+    logging.info("================")
 
 
 if __name__ == "__main__":
