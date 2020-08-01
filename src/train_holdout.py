@@ -9,8 +9,8 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score, classification_report
+from torch.utils.data import DataLoader, Subset
+from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
 import logging
@@ -61,27 +61,33 @@ def train_model(
     logging.info(f"Constant-Q transform: {cqt}")
     logging.info(f"STFT chromagram: {chroma}")
     logging.info("==================================")
-    train_dataset = AudioDataset(
-        dataset_path,
-        [1, 2, 3, 4],
-        sampling_rate,
-        arguments,
-        log_mel,
-        delta_log_mel,
-        mfcc,
-        cqt,
-        chroma,
+    train_dataset = Subset(
+        AudioDataset(
+            dataset_path,
+            [1, 2, 3, 4],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+            cqt,
+            chroma,
+        ),
+        list(range(30)),
     )
-    val_dataset = AudioDataset(
-        dataset_path,
-        [5],
-        sampling_rate,
-        arguments,
-        log_mel,
-        delta_log_mel,
-        mfcc,
-        cqt,
-        chroma,
+    val_dataset = Subset(
+        AudioDataset(
+            dataset_path,
+            [5],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+            cqt,
+            chroma,
+        ),
+        list(range(30)),
     )
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -102,7 +108,8 @@ def train_model(
 
     best_accuracy = -1
     best_epoch = -1
-    best_report = ""
+    target2total = {}
+    target2correct = {}
     for epoch in range(epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -139,20 +146,27 @@ def train_model(
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 
+            for target, pred in zip(targets, predictions):
+                if target not in target2total:
+                    target2total[target] = 0
+                    target2correct[target] = 0
+                target2total[target] += 1
+                if pred == target:
+                    target2correct[target] += 1
+
             cur_accuracy = accuracy_score(targets, predictions)
             if cur_accuracy > best_accuracy:
                 best_accuracy = cur_accuracy
                 best_epoch = epoch + 1
-                best_report = classification_report(
-                    targets,
-                    predictions,
-                    labels=list(target2name.keys()),
-                    target_names=list(target2name.values()),
-                )
                 logging.info("===========================")
                 logging.info(
                     f"Best on epoch {epoch+1} with accuracy {best_accuracy}! Saving..."
                 )
+                print(sum(target2correct.values()) / sum(target2total.values()))
+                for target in target2total.keys():
+                    print(
+                        f"{target2name[target]}: {target2correct[target]/target2total[target]}"
+                    )
                 logging.info("===========================")
                 # torch.save(model.state_dict(), save_model_path)
             else:
@@ -160,7 +174,6 @@ def train_model(
 
     logging.info("============= CLASSIFICATION REPORT START ==============")
     logging.info(f"Best total accuracy metrics on epoch {best_epoch}")
-    logging.info(best_report)
     logging.info("============= CLASSIFICATION REPORT END ==============")
 
 
