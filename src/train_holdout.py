@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
@@ -61,33 +61,28 @@ def train_model(
     logging.info(f"Constant-Q transform: {cqt}")
     logging.info(f"STFT chromagram: {chroma}")
     logging.info("==================================")
-    train_dataset = Subset(
-        AudioDataset(
-            dataset_path,
-            [1, 2, 3, 4],
-            sampling_rate,
-            arguments,
-            log_mel,
-            delta_log_mel,
-            mfcc,
-            cqt,
-            chroma,
-        ),
-        list(range(30)),
+    train_dataset = AudioDataset(
+        dataset_path,
+        [1, 2, 3, 4],
+        sampling_rate,
+        arguments,
+        log_mel,
+        delta_log_mel,
+        mfcc,
+        cqt,
+        chroma,
     )
-    val_dataset = Subset(
-        AudioDataset(
-            dataset_path,
-            [5],
-            sampling_rate,
-            arguments,
-            log_mel,
-            delta_log_mel,
-            mfcc,
-            cqt,
-            chroma,
-        ),
-        list(range(30)),
+
+    val_dataset = AudioDataset(
+        dataset_path,
+        [5],
+        sampling_rate,
+        arguments,
+        log_mel,
+        delta_log_mel,
+        mfcc,
+        cqt,
+        chroma,
     )
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
