@@ -9,12 +9,12 @@ import torch
 from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 import argparse
 import os
 import logging
 
-from datasets import AudioDataset
+from datasets import AudioDataset, target2name
 from modeling import get_seq_model
 
 
@@ -139,7 +139,18 @@ def train_model(
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
             logging.info(f"Test accuracy: {accuracy_score(targets, predictions)}!")
+            logging.info("============ REPORT START ==============")
+            logging.info(
+                classification_report(
+                    targets,
+                    predictions,
+                    labels=list(target2name.keys()),
+                    target_names=list(target2name.values()),
+                )
+            )
+            logging.info("============ REPORT START ==============")
             total_accuracy += accuracy_score(targets, predictions)
+
     logging.info("============")
     logging.info(f"The total accuracy is {total_accuracy / len(data_splits)}")
     logging.info("============")

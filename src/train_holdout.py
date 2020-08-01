@@ -10,12 +10,12 @@ import torch
 from torch import nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 from tqdm import tqdm
 import argparse
 import logging
 
-from datasets import AudioDataset
+from datasets import AudioDataset, target2name
 from modeling import get_seq_model
 
 
@@ -96,10 +96,13 @@ def train_model(
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    logging.info(f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples.")
+    logging.info(
+        f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
+    )
 
     best_accuracy = -1
     best_epoch = -1
+    best_report = ""
     for epoch in range(epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -140,18 +143,25 @@ def train_model(
             if cur_accuracy > best_accuracy:
                 best_accuracy = cur_accuracy
                 best_epoch = epoch + 1
+                best_report = classification_report(
+                    targets,
+                    predictions,
+                    labels=list(target2name.keys()),
+                    target_names=list(target2name.values()),
+                )
                 logging.info("===========================")
                 logging.info(
                     f"Best on epoch {epoch+1} with accuracy {best_accuracy}! Saving..."
                 )
                 logging.info("===========================")
-                torch.save(model.state_dict(), save_model_path)
+                # torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
-    logging.info("===========================")
-    logging.info(f"Best total accuracy: {best_accuracy} on epoch {best_epoch}")
-    logging.info("===========================")
+    logging.info("============= CLASSIFICATION REPORT START ==============")
+    logging.info(f"Best total accuracy metrics on epoch {best_epoch}")
+    logging.info(best_report)
+    logging.info("============= CLASSIFICATION REPORT END ==============")
 
 
 if __name__ == "__main__":
