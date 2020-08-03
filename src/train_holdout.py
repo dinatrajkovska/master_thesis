@@ -102,8 +102,6 @@ def train_model(
 
     best_accuracy = -1
     best_epoch = -1
-    target2total = {}
-    target2correct = {}
     for epoch in range(epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -142,7 +140,9 @@ def train_model(
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 
-            for target, pred in zip(targets, predictions):
+            for i in range(predictions.shape[0]):
+                target = targets[i]
+                pred = predictions[i]
                 if target not in target2total:
                     target2total[target] = 0
                     target2correct[target] = 0

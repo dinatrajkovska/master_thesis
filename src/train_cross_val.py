@@ -140,13 +140,16 @@ def train_model(
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 
-            for target, pred in zip(targets, predictions):
+            for i in range(predictions.shape[0]):
+                target = targets[i]
+                pred = predictions[i]
                 if target not in target2total:
                     target2total[target] = 0
                     target2correct[target] = 0
                 target2total[target] += 1
                 if pred == target:
                     target2correct[target] += 1
+
             cur_accuracy = sum(target2correct.values()) / sum(target2total.values())
             logging.info(f"Test accuracy: {cur_accuracy}!")
             logging.info("Per-class accuracies:")
