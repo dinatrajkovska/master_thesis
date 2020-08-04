@@ -109,7 +109,7 @@ def train_model(
         for epoch in range(epochs):
             # Set model in train mode
             model.train(True)
-            for audio, target in train_loader:
+            for _, audio, target in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
@@ -130,7 +130,7 @@ def train_model(
         target2correct = {}
         index = 0
         with torch.no_grad():
-            for audio, target in test_loader:
+            for _, audio, target in test_loader:
                 audio, target = audio.to(device), target.to(device)
                 probs = model(audio)
                 pred = probs.argmax(dim=-1)

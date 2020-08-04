@@ -107,7 +107,7 @@ def train_model(
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for audio, target in train_loader:
+            for _, audio, target in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
@@ -131,7 +131,7 @@ def train_model(
         target2correct = {}
         index = 0
         with torch.no_grad():
-            for audio, target in tqdm(val_loader):
+            for _, audio, target in tqdm(val_loader):
                 audio, target = audio.to(device), target.to(device)
                 pred = model(audio).argmax(dim=-1)
                 # Aggregate predictions and targets
@@ -164,7 +164,7 @@ def train_model(
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
