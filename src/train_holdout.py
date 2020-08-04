@@ -20,6 +20,7 @@ from modeling import get_seq_model
 
 def train_model(
     dataset_name,
+    gammatones_path,
     sampling_rate,
     dft_window_size,
     hop_length,
@@ -64,6 +65,7 @@ def train_model(
     logging.info("==================================")
     train_dataset = AudioDataset(
         dataset_path,
+        gammatones_path,
         [1, 2, 3, 4],
         sampling_rate,
         arguments,
@@ -77,6 +79,7 @@ def train_model(
 
     val_dataset = AudioDataset(
         dataset_path,
+        gammatones_path,
         [5],
         sampling_rate,
         arguments,
@@ -189,12 +192,16 @@ if __name__ == "__main__":
     parser.add_argument("--gfcc", action="store_true")
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
+    parser.add_argument(
+        "--gammatones_path", default="data/gammatone_features", type=str
+    )
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
     args = parser.parse_args()
     train_model(
         args.dataset_name,
+        args.gammatones_path,
         args.sampling_rate,
         args.dft_window_size,
         args.hop_length,

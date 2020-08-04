@@ -19,6 +19,7 @@ from modeling import get_seq_model
 
 def train_model(
     dataset_name,
+    gammatones_path,
     sampling_rate,
     dft_window_size,
     hop_length,
@@ -72,6 +73,7 @@ def train_model(
         logging.info(f"----------- Starting split number {split_num + 1} -----------")
         train_dataset = AudioDataset(
             dataset_path,
+            gammatones_path,
             split[0],
             sampling_rate,
             arguments,
@@ -84,6 +86,7 @@ def train_model(
         )
         test_dataset = AudioDataset(
             dataset_path,
+            gammatones_path,
             split[1],
             sampling_rate,
             arguments,
@@ -183,6 +186,9 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", default=0.01, type=float)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
+    parser.add_argument(
+        "--gammatones_path", default="data/gammatone_features", type=str
+    )
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--mfcc", action="store_true")
@@ -196,6 +202,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     train_model(
         args.dataset_name,
+        args.gammatones_path,
         args.sampling_rate,
         args.dft_window_size,
         args.hop_length,
