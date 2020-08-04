@@ -30,6 +30,7 @@ def train_model(
     cqt,
     chroma,
     learning_rate,
+    weight_decay,
     batch_size,
     epochs,
     log_filepath,
@@ -107,7 +108,9 @@ def train_model(
         model = get_seq_model(in_features).to(device)
 
         criterion = nn.NLLLoss()
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        optimizer = optim.Adam(
+            model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        )
 
         logging.info(
             f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
@@ -184,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--learning_rate", default=0.0001, type=float)
+    parser.add_argument("--weight_decay", default=0.01, type=float)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument(
@@ -213,6 +217,7 @@ if __name__ == "__main__":
         args.cqt,
         args.chroma,
         args.learning_rate,
+        args.weight_decay,
         args.batch_size,
         args.epochs,
         args.log_filepath,
