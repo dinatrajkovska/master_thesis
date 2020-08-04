@@ -90,9 +90,7 @@ def train_model(
         cqt,
         chroma,
     )
-
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
     ### One option is to create a Sequential model.
@@ -119,14 +117,15 @@ def train_model(
                 optimizer.zero_grad()
                 # forward
                 audio, target = audio.to(device), target.to(device)
-                prediction = model(audio)
+                probs = model(audio)
                 # L2 regularization on the penultimate dense layer
-                loss = criterion(prediction, target) + model[31].weight.norm(2) * 0.1
+                loss = criterion(probs, target)  # + model[31].weight.norm(2) * 0.1
                 # backward
                 loss.backward()
                 # update weights
                 optimizer.step()
                 # Update progress bar
+                prediction = torch.argmax(probs, dim=-1)
                 pbar.update(1)
                 pbar.set_postfix({"Batch loss": loss.item()})
 
@@ -140,10 +139,11 @@ def train_model(
         with torch.no_grad():
             for _, audio, target in tqdm(val_loader):
                 audio, target = audio.to(device), target.to(device)
-                pred = model(audio).argmax(dim=-1)
+                probs = model(audio)
+                prediction = torch.argmax(probs, dim=-1)
                 # Aggregate predictions and targets
                 cur_batch_size = target.size()[0]
-                predictions[index : index + cur_batch_size] = pred.cpu().numpy()
+                predictions[index : index + cur_batch_size] = prediction.cpu().numpy()
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
                 index += cur_batch_size
 
@@ -175,14 +175,16 @@ def train_model(
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
-    logging.info(f"Best total accuracy metrics on epoch {best_epoch}")
+    logging.info("===========================")
+    logging.info(f"Best total accuracy {best_accuracy} on epoch {best_epoch}")
+    logging.info("===========================")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train on holdout.")
-    parser.add_argument("--batch_size", default=16, type=int)
-    parser.add_argument("--learning_rate", default=0.01, type=float)
-    parser.add_argument("--epochs", default=100, type=int)
+    parser.add_argument("--batch_size", default=64, type=int)
+    parser.add_argument("--learning_rate", default=0.0001, type=float)
+    parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--log_mel", action="store_true")

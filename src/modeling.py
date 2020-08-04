@@ -124,12 +124,33 @@ def get_seq_model(in_features):
         nn.BatchNorm2d(num_features=256),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         nn.Flatten(),
-        nn.Linear(6656, 512),
+        nn.Linear(4096, 512),
         nn.Dropout(0.5),
         nn.LeakyReLU(),
         nn.Linear(512, 50),
         nn.LogSoftmax(dim=-1),
     )
+
+
+class StupidModel(nn.Module):
+    def __init__(self, in_features):
+        super(StupidModel, self).__init__()
+        self.flat = nn.Flatten()
+        self.relu = nn.ReLU()
+        self.fc1 = nn.Linear(128 * 431 * in_features, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, 50)
+        self.softmax = nn.LogSoftmax(dim=-1)
+
+    def forward(self, x):
+        out = self.flat(x)
+        out = self.fc1(out)
+        out = self.relu(out)
+        out = self.fc2(out)
+        out = self.relu(out)
+        out = self.fc3(out)
+        out = self.softmax(out)
+        return out
 
 
 # Class-based model
@@ -322,28 +343,28 @@ class AttentionModel(nn.Module):
     def forward(self, x):
         # Block 1
         out_cnn = self.main1(x)
-        # out_attn = self.attn1(x)
-        out = out_cnn  # * out_attn
+        out_attn = self.attn1(x)
+        out = out_cnn * out_attn
         # Block 2
         out_cnn = self.main2(out)
-        # out_attn = self.attn2(out)
-        out = out_cnn  # * out_attn
+        out_attn = self.attn2(out)
+        out = out_cnn * out_attn
         # Block 3
         out_cnn = self.main3(out)
-        # out_attn = self.attn3(out)
-        out = out_cnn  # * out_attn
+        out_attn = self.attn3(out)
+        out = out_cnn * out_attn
         # Block 4
         out_cnn = self.main4(out)
-        # out_attn = self.attn4(out)
-        out = out_cnn  # * out_attn
+        out_attn = self.attn4(out)
+        out = out_cnn * out_attn
         # Block 5
         out_cnn = self.main5(out)
-        # out_attn = self.attn5(out)
-        out = out_cnn  # * out_attn
+        out_attn = self.attn5(out)
+        out = out_cnn * out_attn
         # Block 6
         out_cnn = self.main6(out)
-        # out_attn = self.attn6(out)
-        out = out_cnn  # * out_attn
+        out_attn = self.attn6(out)
+        out = out_cnn * out_attn
         # Last Layers
         out = self.flatten(out)
         out = self.linear1(out)

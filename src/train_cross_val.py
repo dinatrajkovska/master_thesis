@@ -171,19 +171,19 @@ def train_model(
                 total_per_class[class_name] += class_accuracy
             total_accuracy += cur_accuracy
 
-    logging.info("=================")
+    logging.info("====================================================")
     logging.info("The averaged per-class accuracies are: ")
     for class_name, class_accuracy in total_per_class.items():
         logging.info(f"{class_name}: {class_accuracy / len(data_splits)}")
     logging.info(f"The averaged accuracy is {total_accuracy / len(data_splits)}")
-    logging.info("================")
+    logging.info("====================================================")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--epochs", default=500, type=int)
-    parser.add_argument("--learning_rate", default=0.01, type=float)
+    parser.add_argument("--learning_rate", default=0.0001, type=float)
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument(
