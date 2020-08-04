@@ -88,14 +88,14 @@ class AudioDataset(torch.utils.data.Dataset):
             features = []
             if log_mel:
                 # https://librosa.org/doc/latest/generated/librosa.feature.melspectrogram.html
-                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments).T
+                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
                 # Normalize - min max norm
                 log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
                 log_mel_spectrogram = np.expand_dims(log_mel_spectrogram, axis=0)
                 features.append(log_mel_spectrogram)
             if delta_log_mel:
                 # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
-                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments).T
+                log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
                 # Normalize - min max norm
                 log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
                 # Compute delta log mel spectrogram
@@ -112,7 +112,7 @@ class AudioDataset(torch.utils.data.Dataset):
                 log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments)
                 mel_frequency_coefficients = librosa.feature.mfcc(
                     S=log_mel_spectrogram, n_mfcc=128, sr=arguments["sr"]
-                ).T
+                )
                 mel_frequency_coefficients = self.min_max_normalize(
                     mel_frequency_coefficients
                 )
@@ -129,7 +129,7 @@ class AudioDataset(torch.utils.data.Dataset):
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
                     bins_per_octave=128,
-                ).T
+                )
                 constant_q = np.expand_dims(constant_q, axis=0)
                 features.append(constant_q)
             if chromagram:
@@ -143,7 +143,7 @@ class AudioDataset(torch.utils.data.Dataset):
                     n_fft=arguments["n_fft"],
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
-                ).T
+                )
                 chroma = np.expand_dims(chroma, axis=0)
                 features.append(chroma)
 

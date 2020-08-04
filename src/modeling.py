@@ -124,11 +124,11 @@ def get_seq_model(in_features):
         nn.BatchNorm2d(num_features=256),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         nn.Flatten(),
-        nn.Linear(4096, 512),
+        nn.Linear(6656, 512),
         nn.Dropout(0.5),
         nn.LeakyReLU(),
         nn.Linear(512, 50),
-        nn.LogSoftmax(dim=1),
+        nn.LogSoftmax(dim=-1),
     )
 
 
