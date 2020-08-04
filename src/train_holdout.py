@@ -26,6 +26,7 @@ def train_model(
     log_mel,
     delta_log_mel,
     mfcc,
+    gfcc,
     cqt,
     chroma,
     learning_rate,
@@ -51,12 +52,13 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "n_mels": 128}
+    arguments = {"n_fft": dft_window_size, "hop_length": hop_length}
     logging.info("==================================")
     logging.info("Features used: ")
     logging.info(f"Log mel spectogram: {log_mel}")
     logging.info(f"Delta log mel spectogram: {delta_log_mel}")
     logging.info(f"Mel-frequency cepstral coefficients: {mfcc}")
+    logging.info(f"Gammatone-frequency cepstral coefficients: {gfcc}")
     logging.info(f"Constant-Q transform: {cqt}")
     logging.info(f"STFT chromagram: {chroma}")
     logging.info("==================================")
@@ -68,6 +70,7 @@ def train_model(
         log_mel,
         delta_log_mel,
         mfcc,
+        gfcc,
         cqt,
         chroma,
     )
@@ -80,6 +83,7 @@ def train_model(
         log_mel,
         delta_log_mel,
         mfcc,
+        gfcc,
         cqt,
         chroma,
     )
@@ -89,7 +93,7 @@ def train_model(
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
     ### One option is to create a Sequential model.
-    in_features = np.sum([log_mel, delta_log_mel, mfcc, cqt, chroma])
+    in_features = np.sum([log_mel, delta_log_mel, mfcc, gfcc, cqt, chroma])
     assert in_features > 0
     model = get_seq_model(in_features).to(device)
 
@@ -182,6 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--cqt", action="store_true")
     parser.add_argument("--chroma", action="store_true")
+    parser.add_argument("--gfcc", action="store_true")
     parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)
@@ -196,6 +201,7 @@ if __name__ == "__main__":
         args.log_mel,
         args.delta_log_mel,
         args.mfcc,
+        args.gfcc,
         args.cqt,
         args.chroma,
         args.learning_rate,

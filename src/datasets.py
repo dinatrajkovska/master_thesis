@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import librosa
 import os
+from gammatone.gtgram import gtgram
 
 # https://github.com/karolpiczak/ESC-50
 
@@ -71,6 +72,7 @@ class AudioDataset(torch.utils.data.Dataset):
         log_mel,
         delta_log_mel,
         mfcc,
+        gfcc,
         cqt,
         chromagram,
     ):
@@ -119,6 +121,17 @@ class AudioDataset(torch.utils.data.Dataset):
                     mel_frequency_coefficients, axis=0
                 )
                 features.append(mel_frequency_coefficients)
+            if gfcc:
+                gammatone = gtgram(
+                    wave=audio,
+                    fs=sr,
+                    window_time=arguments["n_fft"] / arguments["sr"],
+                    hop_time=(arguments["hop_length"] - 2) / sr,
+                    channels=128,
+                    f_min=0,
+                )
+                gammatone = np.expand_dims(gammatone, axis=0)
+                features.append(gammatone)
             if cqt:
                 # https://librosa.org/doc/latest/generated/librosa.feature.chroma_cqt.html
                 constant_q = librosa.feature.chroma_cqt(
@@ -161,7 +174,7 @@ class AudioDataset(torch.utils.data.Dataset):
             sr=arguments["sr"],
             n_fft=arguments["n_fft"],
             hop_length=arguments["hop_length"],
-            n_mels=arguments["n_mels"],
+            n_mels=128,
         )
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
         return log_mel_spectrogram
