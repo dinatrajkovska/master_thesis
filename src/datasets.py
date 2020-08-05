@@ -140,12 +140,12 @@ class AudioDataset(torch.utils.data.Dataset):
                 constant_q = np.abs(
                     librosa.cqt(
                         audio,
-                        sr=sr,
+                        sr=arguments["sr"],
                         hop_length=arguments["hop_length"],
                         n_bins=128,
                         bins_per_octave=128,
                     )
-                )
+                ).T
                 constant_q = librosa.amplitude_to_db(constant_q, ref=np.max)
                 constant_q = np.expand_dims(constant_q, axis=0)
                 features.append(constant_q)
