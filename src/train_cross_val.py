@@ -124,9 +124,8 @@ def train_model(
                 optimizer.zero_grad()
                 # forward
                 audio, target = audio.to(device), target.to(device)
-                prediction = model(audio)
-                # L2 regularization on the penultimate dense layer
-                loss = criterion(prediction, target) + model[31].weight.norm(2) * 0.1
+                probs = model(audio)
+                loss = criterion(probs, target)
                 # backward
                 loss.backward()
                 # update weights
