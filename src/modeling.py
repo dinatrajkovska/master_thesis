@@ -11,6 +11,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32,
             out_channels=32,
@@ -18,9 +19,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32, out_channels=32, kernel_size=(1, 1), stride=1, padding=0
         ),
+        nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=32),
         nn.MaxPool2d(kernel_size=(1, 2), padding=0),
         # Block 2
@@ -31,6 +34,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32,
             out_channels=32,
@@ -38,9 +42,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32, out_channels=32, kernel_size=(1, 1), stride=1, padding=0
         ),
+        nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=32),
         nn.MaxPool2d(kernel_size=(4, 1), padding=(1, 0)),
         # Block 3
@@ -51,6 +57,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64,
             out_channels=64,
@@ -58,9 +65,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64, out_channels=64, kernel_size=(1, 1), stride=1, padding=0
         ),
+        nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=64),
         nn.MaxPool2d(kernel_size=(1, 2), padding=0),
         # Block 4
@@ -71,6 +80,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64,
             out_channels=64,
@@ -78,9 +88,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64, out_channels=64, kernel_size=(1, 1), stride=1, padding=0
         ),
+        nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=64),
         nn.MaxPool2d(kernel_size=(4, 1), padding=0),
         # Block 5
@@ -91,6 +103,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=128,
             out_channels=128,
@@ -98,9 +111,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=128, out_channels=128, kernel_size=(1, 1), stride=1, padding=0
         ),
+        nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=128),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         # Block 6
@@ -111,6 +126,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=256,
             out_channels=256,
@@ -118,9 +134,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
+        nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=256, out_channels=256, kernel_size=(1, 1), stride=1, padding=0
         ),
+        nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=256),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         nn.Flatten(),
@@ -182,13 +200,17 @@ class MainBlock(nn.Module):
             stride=1,
             padding=0,
         )
+        self.leaky_relu = nn.LeakyReLU()
         self.batchnorm = nn.BatchNorm2d(num_features=out_channels)
         self.maxpool = nn.MaxPool2d(kernel_size=pool_size, padding=maxpool_pad)
 
     def forward(self, x):
         out = self.conv1(x)
+        out = self.leaky_relu(out)
         out = self.conv2(out)
+        out = self.leaky_relu(out)
         out = self.conv3(out)
+        out = self.leaky_relu(out)
         out = self.batchnorm(out)
         out = self.maxpool(out)
         return out
@@ -225,13 +247,13 @@ class AttnBlock(nn.Module):
             in_channels, out_channels, kernel_size, padding
         )
         self.batchnorm = nn.BatchNorm2d(num_features=out_channels)
-        self.relu = nn.ReLU()
+        self.leaky_relu = nn.LeakyReLU()
 
     def forward(self, x):
         out = self.maxpool(x)
         out = self.depthpoint(out)
         out = self.batchnorm(out)
-        out = self.relu(out)
+        out = self.leaky_relu(out)
         return out
 
 
