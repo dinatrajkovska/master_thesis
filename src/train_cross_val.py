@@ -165,8 +165,8 @@ def train_model(
                 best_fold_accuracy = cur_accuracy
                 best_target2correct = target2correct
 
-        logging.info(f"Test accuracy: {best_fold_accuracy}!")
-        logging.info("Per-class accuracies:")
+        logging.info(f"Best test accuracy: {best_fold_accuracy}!")
+        logging.info("Best per-class accuracies:")
         for target in target2total.keys():
             # Obtain class name and class accuracy
             class_name = target2name[target]
