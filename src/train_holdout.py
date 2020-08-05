@@ -121,7 +121,6 @@ def train_model(
                 # forward
                 audio, target = audio.to(device), target.to(device)
                 probs = model(audio)
-                # L2 regularization on the penultimate dense layer
                 loss = criterion(probs, target)
                 # backward
                 loss.backward()
