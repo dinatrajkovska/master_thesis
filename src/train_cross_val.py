@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 import argparse
 import os
 import logging
+from tqdm import tqdm
 
 from datasets import AudioDataset, target2name
 from modeling import get_seq_model
@@ -117,7 +118,7 @@ def train_model(
         )
         best_fold_accuracy = -1
         best_target2correct = {}
-        for epoch in range(epochs):
+        for epoch in tqdm(range(epochs)):
             # Set model in train mode
             model.train(True)
             for _, audio, target in train_loader:
@@ -176,7 +177,7 @@ def train_model(
             if class_name not in total_per_class:
                 total_per_class[class_name] = 0
             total_per_class[class_name] += class_accuracy
-        total_accuracy += cur_accuracy
+        total_accuracy += best_fold_accuracy
 
     logging.info("====================================================")
     logging.info("The averaged per-class accuracies are: ")
