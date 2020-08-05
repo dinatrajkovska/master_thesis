@@ -150,7 +150,7 @@ def get_seq_model(in_features):
         nn.Flatten(),
         nn.Linear(4096, 512),
         nn.LeakyReLU(),
-        # nn.Dropout(0.5),
+        nn.Dropout(0.5),
         nn.Linear(512, 50),
         nn.LogSoftmax(dim=-1),
     )
