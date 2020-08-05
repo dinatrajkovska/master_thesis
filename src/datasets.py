@@ -130,23 +130,13 @@ class AudioDataset(torch.utils.data.Dataset):
             if cqt:
                 # https://librosa.org/doc/latest/generated/librosa.cqt.html
                 # https://librosa.org/doc/latest/generated/librosa.feature.chroma_cqt.html
-                # constant_q = librosa.feature.chroma_cqt(
-                #     y=audio,
-                #     sr=arguments["sr"],
-                #     hop_length=arguments["hop_length"],
-                #     n_chroma=128,
-                #     bins_per_octave=128,
-                # ).T
-                constant_q = np.abs(
-                    librosa.cqt(
-                        audio,
-                        sr=arguments["sr"],
-                        hop_length=arguments["hop_length"],
-                        n_bins=128,
-                        bins_per_octave=128,
-                    )
+                constant_q = librosa.feature.chroma_cqt(
+                    y=audio,
+                    sr=arguments["sr"],
+                    hop_length=arguments["hop_length"],
+                    n_chroma=128,
+                    bins_per_octave=128,
                 ).T
-                constant_q = librosa.amplitude_to_db(constant_q, ref=np.max)
                 constant_q = np.expand_dims(constant_q, axis=0)
                 features.append(constant_q)
             if chromagram:
