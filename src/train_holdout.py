@@ -98,6 +98,7 @@ def train_model(
     in_features = np.sum([log_mel, delta_log_mel, mfcc, gfcc, cqt, chroma])
     assert in_features > 0
     model = get_seq_model(in_features).to(device)
+    # model = StupidModel(in_features)
 
     criterion = nn.NLLLoss()
     optimizer = optim.Adam(
@@ -127,7 +128,6 @@ def train_model(
                 # update weights
                 optimizer.step()
                 # Update progress bar
-                prediction = torch.argmax(probs, dim=-1)
                 pbar.update(1)
                 pbar.set_postfix({"Batch loss": loss.item()})
 

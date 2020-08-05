@@ -24,7 +24,8 @@ def get_seq_model(in_features):
             in_channels=32, out_channels=32, kernel_size=(1, 1), stride=1, padding=0
         ),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=32),
+        # nn.BatchNorm2d(num_features=32),
+        nn.LayerNorm([32, 431, 128]),
         nn.MaxPool2d(kernel_size=(1, 2), padding=0),
         # Block 2
         nn.Conv2d(
@@ -47,7 +48,8 @@ def get_seq_model(in_features):
             in_channels=32, out_channels=32, kernel_size=(1, 1), stride=1, padding=0
         ),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=32),
+        # nn.BatchNorm2d(num_features=32),
+        nn.LayerNorm([32, 431, 64]),
         nn.MaxPool2d(kernel_size=(4, 1), padding=(1, 0)),
         # Block 3
         nn.Conv2d(
@@ -70,7 +72,8 @@ def get_seq_model(in_features):
             in_channels=64, out_channels=64, kernel_size=(1, 1), stride=1, padding=0
         ),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=64),
+        # nn.BatchNorm2d(num_features=64),
+        nn.LayerNorm([64, 108, 64]),
         nn.MaxPool2d(kernel_size=(1, 2), padding=0),
         # Block 4
         nn.Conv2d(
@@ -93,7 +96,8 @@ def get_seq_model(in_features):
             in_channels=64, out_channels=64, kernel_size=(1, 1), stride=1, padding=0
         ),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=64),
+        # nn.BatchNorm2d(num_features=64),
+        nn.LayerNorm([64, 108, 32]),
         nn.MaxPool2d(kernel_size=(4, 1), padding=0),
         # Block 5
         nn.Conv2d(
@@ -116,7 +120,8 @@ def get_seq_model(in_features):
             in_channels=128, out_channels=128, kernel_size=(1, 1), stride=1, padding=0
         ),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=128),
+        # nn.BatchNorm2d(num_features=128),
+        nn.LayerNorm([128, 27, 32]),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         # Block 6
         nn.Conv2d(
@@ -139,12 +144,13 @@ def get_seq_model(in_features):
             in_channels=256, out_channels=256, kernel_size=(1, 1), stride=1, padding=0
         ),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=256),
+        # nn.BatchNorm2d(num_features=256),
+        nn.LayerNorm([256, 7, 16]),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         nn.Flatten(),
         nn.Linear(4096, 512),
         nn.LeakyReLU(),
-        nn.Dropout(0.5),
+        # nn.Dropout(0.5),
         nn.Linear(512, 50),
         nn.LogSoftmax(dim=-1),
     )
@@ -154,7 +160,7 @@ class StupidModel(nn.Module):
     def __init__(self, in_features):
         super(StupidModel, self).__init__()
         self.flat = nn.Flatten()
-        self.relu = nn.ReLU()
+        self.leaky_relu = nn.LeakyReLU()
         self.fc1 = nn.Linear(128 * 431 * in_features, 512)
         self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, 50)
@@ -163,9 +169,9 @@ class StupidModel(nn.Module):
     def forward(self, x):
         out = self.flat(x)
         out = self.fc1(out)
-        out = self.relu(out)
+        out = self.leaky_relu(out)
         out = self.fc2(out)
-        out = self.relu(out)
+        out = self.leaky_relu(out)
         out = self.fc3(out)
         out = self.softmax(out)
         return out
