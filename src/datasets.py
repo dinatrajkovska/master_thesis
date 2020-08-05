@@ -153,9 +153,7 @@ class AudioDataset(torch.utils.data.Dataset):
 
             self.inputs.append(np.concatenate(features, axis=0).astype(np.float32))
             self.paths.append(path)
-            self.targets.append(
-                int(filename.split("/")[-1].split(".")[0].split("-")[-1])
-            )
+            self.targets.append(int(filename.split(".")[0].split("-")[-1]))
 
     def __getitem__(self, idx):
         return self.paths[idx], self.inputs[idx], self.targets[idx]

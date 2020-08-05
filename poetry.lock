@@ -138,6 +138,19 @@ python-versions = ">=2.7"
 version = "0.3"
 
 [[package]]
+category = "main"
+description = "Library for audio and music analysis, description and synthesis"
+name = "essentia"
+optional = false
+python-versions = "*"
+version = "2.1b6.dev184"
+
+[package.dependencies]
+numpy = ">=1.8.2"
+pyyaml = "*"
+six = "*"
+
+[[package]]
 category = "dev"
 description = "the modular source code checker: pep8, pyflakes and co"
 name = "flake8"
@@ -751,6 +764,14 @@ version = "0.5.7"
 
 [[package]]
 category = "main"
+description = "YAML parser and emitter for Python"
+name = "pyyaml"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "5.3.1"
+
+[[package]]
+category = "main"
 description = "Python bindings for 0MQ"
 name = "pyzmq"
 optional = false
@@ -994,7 +1015,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "e6fd06ffb6dfe9f9974f38aba5c99b79d16c100d27c39b6aa2830be35fb063b2"
+content-hash = "d2b3817f81d55803d8260820aa44067ea765eb6cdbe42f20df217a1708337bda"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1078,6 +1099,21 @@ defusedxml = [
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
     {file = "entrypoints-0.3.tar.gz", hash = "sha256:c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"},
+]
+essentia = [
+    {file = "essentia-2.1b6.dev184-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:f8eced9f758e42d7f5020a4c63be0d328a16e026e56bb0c772318dfb32289cbd"},
+    {file = "essentia-2.1b6.dev184-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:ccc7c3d1210955d6af32541042f7ca30f826a778c942238919b9e2523227adfe"},
+    {file = "essentia-2.1b6.dev184-cp27-cp27mu-manylinux1_i686.whl", hash = "sha256:60c60224501bff13a49b50312a262756df790983c6a1d51de0ed224b7a4261db"},
+    {file = "essentia-2.1b6.dev184-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:62f79cbf82d93c0ac69a13addd65aeb7b2af5c1bcd6273351536c4008c124f2b"},
+    {file = "essentia-2.1b6.dev184-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:dbdf5558fbaedc5f55520224eb7e1f48e8a3461eaa203f5446c02c2ca499de7c"},
+    {file = "essentia-2.1b6.dev184-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:157ba9d3be590f5bb59e9af279a918cf1dfd51473d3bf101f56e9b4fa39ad4d1"},
+    {file = "essentia-2.1b6.dev184-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:26ab4e84123fa0e47d9bc417ffd3305d00511e9b0728ea4c39fcdffc04f69dfb"},
+    {file = "essentia-2.1b6.dev184-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:3e254100149746a7ded3f137b3a4347a7ba38ae029f3f8904030fb55edd45778"},
+    {file = "essentia-2.1b6.dev184-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:c0a2c32a4dbc4b9ef85a6596d2d035a0b83d578770643ddafbf1db5b6c2b75c3"},
+    {file = "essentia-2.1b6.dev184-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:1b6d1ca0571d50b9be53cf67aea494f9ac0c2ab65f342cafa4dc906e95adb1b8"},
+    {file = "essentia-2.1b6.dev184-cp38-cp38-manylinux1_i686.whl", hash = "sha256:484649f0e195e347b2c9aa44e7f64d3a2d08992fb590226ba4c18dbb25637d19"},
+    {file = "essentia-2.1b6.dev184-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:90fed1d73cfb47092a0617b8474084ce0b6996a0574d6bd9e0fb1711408fd93f"},
+    {file = "essentia-2.1b6.dev184.tar.gz", hash = "sha256:30ff4b07282e33dc0b0a601e179b29d4a985d9d64450dad717365a3bc8aa1b53"},
 ]
 flake8 = [
     {file = "flake8-3.7.9-py2.py3-none-any.whl", hash = "sha256:49356e766643ad15072a789a20915d3c91dc89fd313ccd71802303fd67e4deca"},
@@ -1430,6 +1466,19 @@ pywinpty = [
     {file = "pywinpty-0.5.7-cp37-cp37m-win_amd64.whl", hash = "sha256:dd22c8efacf600730abe4a46c1388355ce0d4ab75dc79b15d23a7bd87bf05b48"},
     {file = "pywinpty-0.5.7-cp38-cp38-win_amd64.whl", hash = "sha256:8fc5019ff3efb4f13708bd3b5ad327589c1a554cb516d792527361525a7cb78c"},
     {file = "pywinpty-0.5.7.tar.gz", hash = "sha256:2d7e9c881638a72ffdca3f5417dd1563b60f603e1b43e5895674c2a1b01f95a0"},
+]
+pyyaml = [
+    {file = "PyYAML-5.3.1-cp27-cp27m-win32.whl", hash = "sha256:74809a57b329d6cc0fdccee6318f44b9b8649961fa73144a98735b0aaf029f1f"},
+    {file = "PyYAML-5.3.1-cp27-cp27m-win_amd64.whl", hash = "sha256:240097ff019d7c70a4922b6869d8a86407758333f02203e0fc6ff79c5dcede76"},
+    {file = "PyYAML-5.3.1-cp35-cp35m-win32.whl", hash = "sha256:4f4b913ca1a7319b33cfb1369e91e50354d6f07a135f3b901aca02aa95940bd2"},
+    {file = "PyYAML-5.3.1-cp35-cp35m-win_amd64.whl", hash = "sha256:cc8955cfbfc7a115fa81d85284ee61147059a753344bc51098f3ccd69b0d7e0c"},
+    {file = "PyYAML-5.3.1-cp36-cp36m-win32.whl", hash = "sha256:7739fc0fa8205b3ee8808aea45e968bc90082c10aef6ea95e855e10abf4a37b2"},
+    {file = "PyYAML-5.3.1-cp36-cp36m-win_amd64.whl", hash = "sha256:69f00dca373f240f842b2931fb2c7e14ddbacd1397d57157a9b005a6a9942648"},
+    {file = "PyYAML-5.3.1-cp37-cp37m-win32.whl", hash = "sha256:d13155f591e6fcc1ec3b30685d50bf0711574e2c0dfffd7644babf8b5102ca1a"},
+    {file = "PyYAML-5.3.1-cp37-cp37m-win_amd64.whl", hash = "sha256:73f099454b799e05e5ab51423c7bcf361c58d3206fa7b0d555426b1f4d9a3eaf"},
+    {file = "PyYAML-5.3.1-cp38-cp38-win32.whl", hash = "sha256:06a0d7ba600ce0b2d2fe2e78453a470b5a6e000a985dd4a4e54e436cc36b0e97"},
+    {file = "PyYAML-5.3.1-cp38-cp38-win_amd64.whl", hash = "sha256:95f71d2af0ff4227885f7a6605c37fd53d3a106fcab511b8860ecca9fcf400ee"},
+    {file = "PyYAML-5.3.1.tar.gz", hash = "sha256:b8eac752c5e14d3eca0e6dd9199cd627518cb5ec06add0de9d32baeee6fe645d"},
 ]
 pyzmq = [
     {file = "pyzmq-19.0.0-cp27-cp27m-macosx_10_9_intel.whl", hash = "sha256:3f12ce1e9cc9c31497bd82b207e8e86ccda9eebd8c9f95053aae46d15ccd2196"},
