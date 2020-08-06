@@ -123,7 +123,7 @@ def train_model(
                 audio, target = audio.to(device), target.to(device)
                 probs = model(audio)
                 loss = (
-                    criterion(probs, target) * model[-5].weight.norm(2) * weight_decay
+                    criterion(probs, target) + model[-5].weight.norm(2) * weight_decay
                 )
                 # backward
                 loss.backward()
