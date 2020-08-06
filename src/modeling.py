@@ -88,7 +88,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64, out_channels=64, kernel_size=(1, 1), stride=1, padding=0
         ),
@@ -111,7 +111,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=128, out_channels=128, kernel_size=(1, 1), stride=1, padding=0
         ),
