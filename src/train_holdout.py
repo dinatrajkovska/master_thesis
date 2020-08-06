@@ -102,9 +102,7 @@ def train_model(
 
     criterion = nn.NLLLoss()
     optimizer = QHAdam(
-        model.parameters(),
-        weight_decay=weight_decay,
-        **QHAdam.from_nadam(lr=learning_rate, betas=(0.9, 0.999)),
+        model.parameters(), **QHAdam.from_nadam(lr=learning_rate, betas=(0.9, 0.999))
     )
 
     logging.info(
@@ -124,7 +122,9 @@ def train_model(
                 # forward
                 audio, target = audio.to(device), target.to(device)
                 probs = model(audio)
-                loss = criterion(probs, target)
+                loss = (
+                    criterion(probs, target) * model[-5].weight.norm(2) * weight_decay
+                )
                 # backward
                 loss.backward()
                 # update weights
