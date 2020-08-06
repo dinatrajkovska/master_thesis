@@ -38,7 +38,9 @@ def train_model(
 ):
     # Set up logging
     if log_filepath:
-        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+        logging.basicConfig(
+            level=logging.INFO, filename=log_filepath, filemode="w"
+        )  # write
     else:
         logging.basicConfig(level=logging.INFO)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -100,6 +102,7 @@ def train_model(
             chroma,
         )
 
+        # iterator over object
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
@@ -116,8 +119,6 @@ def train_model(
         logging.info(
             f"Train on {len(train_dataset)}, validate on {len(test_dataset)} samples."
         )
-        best_fold_accuracy = -1
-        best_target2correct = {}
         for epoch in tqdm(range(epochs)):
             # Set model in train mode
             model.train(True)
@@ -133,51 +134,52 @@ def train_model(
                 # update weights
                 optimizer.step()
 
-            # Set model in evaluation mode
-            model.train(False)
-            predictions = np.zeros(len(test_dataset))
-            targets = np.zeros(len(test_dataset))
-            target2total = {}
-            target2correct = {}
-            index = 0
-            with torch.no_grad():
-                for _, audio, target in test_loader:
-                    audio, target = audio.to(device), target.to(device)
-                    probs = model(audio)
-                    pred = probs.argmax(dim=-1)
-                    # Aggregate predictions and targets
-                    cur_batch_size = target.size()[0]
-                    predictions[index : index + cur_batch_size] = pred.cpu().numpy()
-                    targets[index : index + cur_batch_size] = target.cpu().numpy()
-                    index += cur_batch_size
+        # Set model in evaluation mode
+        model.train(False)
+        predictions = np.zeros(len(test_dataset))
+        targets = np.zeros(len(test_dataset))
+        target2total = {}
+        target2correct = {}
+        index = 0
+        with torch.no_grad():
+            for _, audio, target in test_loader:
+                audio, target = audio.to(device), target.to(device)
+                probs = model(audio)
+                # predicted class
+                pred = probs.argmax(dim=-1)
+                # Aggregate predictions and targets
+                cur_batch_size = target.size()[0]
+                predictions[index : index + cur_batch_size] = pred.cpu().numpy()
+                targets[index : index + cur_batch_size] = target.cpu().numpy()
+                index += cur_batch_size
 
-            for i in range(predictions.shape[0]):
-                target = targets[i]
-                pred = predictions[i]
-                if target not in target2total:
-                    target2total[target] = 0
-                    target2correct[target] = 0
-                target2total[target] += 1
-                if pred == target:
-                    target2correct[target] += 1
+        # dictionaries for calculating metrics
+        for i in range(predictions.shape[0]):
+            target = targets[i]
+            pred = predictions[i]
+            if target not in target2total:
+                target2total[target] = 0
+                target2correct[target] = 0
+            target2total[target] += 1
+            if pred == target:
+                target2correct[target] += 1
 
-            cur_accuracy = sum(target2correct.values()) / sum(target2total.values())
-            if cur_accuracy > best_fold_accuracy:
-                best_fold_accuracy = cur_accuracy
-                best_target2correct = target2correct
-
-        logging.info(f"Best test accuracy: {best_fold_accuracy}!")
-        logging.info("Best per-class accuracies:")
+        cur_accuracy = sum(target2correct.values()) / sum(target2total.values())
+        logging.info(f"Test accuracy: {cur_accuracy}!")
+        logging.info("Per-class accuracies:")
+        # per cl
         for target in target2total.keys():
             # Obtain class name and class accuracy
             class_name = target2name[target]
-            class_accuracy = best_target2correct[target] / target2total[target]
+            class_accuracy = target2correct[target] / target2total[target]
             logging.info(f"{class_name}: {class_accuracy}")
             # Aggregate per class accuracies - happens only the first time
             if class_name not in total_per_class:
+                # total_per_class - gather all per-class accuracies for each fold
                 total_per_class[class_name] = 0
             total_per_class[class_name] += class_accuracy
-        total_accuracy += best_fold_accuracy
+        # gather all accuracies for each fold
+        total_accuracy += cur_accuracy
 
     logging.info("====================================================")
     logging.info("The averaged per-class accuracies are: ")
