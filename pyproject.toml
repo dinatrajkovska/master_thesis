@@ -16,6 +16,7 @@ jupyter = "^1.0"
 spafe = "^0.1.2"
 matplotlib = "^3.3.0"
 gammatone = {git = "https://github.com/detly/gammatone.git"}
+qhoptim = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0", allow-prereleases = true}

@@ -8,7 +8,7 @@ import os
 import numpy as np
 import torch
 from torch import nn
-import torch.optim as optim
+from qhoptim.pyt import QHAdam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
@@ -101,8 +101,10 @@ def train_model(
     # model = StupidModel(in_features)
 
     criterion = nn.NLLLoss()
-    optimizer = optim.Adam(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    optimizer = QHAdam(
+        model.parameters(),
+        weight_decay=weight_decay,
+        **QHAdam.from_nadam(lr=learning_rate, betas=(0.9, 0.999)),
     )
 
     logging.info(
