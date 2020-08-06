@@ -11,7 +11,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32,
             out_channels=32,
@@ -19,11 +19,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32, out_channels=32, kernel_size=(1, 1), stride=1, padding=0
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=32),
         nn.MaxPool2d(kernel_size=(1, 2), padding=0),
         # Block 2
@@ -34,7 +34,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32,
             out_channels=32,
@@ -42,11 +42,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=32, out_channels=32, kernel_size=(1, 1), stride=1, padding=0
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=32),
         nn.MaxPool2d(kernel_size=(4, 1), padding=(1, 0)),
         # Block 3
@@ -57,7 +57,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64,
             out_channels=64,
@@ -65,11 +65,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(0, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64, out_channels=64, kernel_size=(1, 1), stride=1, padding=0
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=64),
         nn.MaxPool2d(kernel_size=(1, 2), padding=0),
         # Block 4
@@ -80,7 +80,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 0),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=64,
             out_channels=64,
@@ -92,7 +92,7 @@ def get_seq_model(in_features):
         nn.Conv2d(
             in_channels=64, out_channels=64, kernel_size=(1, 1), stride=1, padding=0
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=64),
         nn.MaxPool2d(kernel_size=(4, 1), padding=0),
         # Block 5
@@ -103,7 +103,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=128,
             out_channels=128,
@@ -115,7 +115,7 @@ def get_seq_model(in_features):
         nn.Conv2d(
             in_channels=128, out_channels=128, kernel_size=(1, 1), stride=1, padding=0
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=128),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         # Block 6
@@ -126,7 +126,7 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=256,
             out_channels=256,
@@ -134,11 +134,11 @@ def get_seq_model(in_features):
             stride=1,
             padding=(2, 1),
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.Conv2d(
             in_channels=256, out_channels=256, kernel_size=(1, 1), stride=1, padding=0
         ),
-        nn.LeakyReLU(),
+        # nn.LeakyReLU(),
         nn.BatchNorm2d(num_features=256),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         nn.Flatten(),
