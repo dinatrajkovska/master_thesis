@@ -7,7 +7,7 @@
 import numpy as np
 import torch
 from torch import nn
-import qhoptim
+from qhoptim.pyt import QHAdam
 from torch.utils.data import DataLoader
 import argparse
 import os
@@ -112,10 +112,10 @@ def train_model(
         model = get_seq_model(in_features).to(device)
 
         criterion = nn.NLLLoss()
-        optimizer = qhoptim.pyt.QHAdam(
+        optimizer = QHAdam(
             model.parameters(),
             weight_decay=weight_decay,
-            **qhoptim.pyt.QHAdam.from_nadam(lr=learning_rate, betas=(0.9, 0.999)),
+            **QHAdam.from_nadam(lr=learning_rate, betas=(0.9, 0.999)),
         )
 
         logging.info(
