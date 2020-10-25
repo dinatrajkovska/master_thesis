@@ -15,7 +15,7 @@ import argparse
 import logging
 
 from datasets import AudioDataset, target2name
-from modeling import get_seq_model
+from modeling import get_seq_model, piczak_model
 
 
 def train_model(
@@ -24,6 +24,7 @@ def train_model(
     sampling_rate,
     dft_window_size,
     hop_length,
+    n_mels,
     log_mel,
     delta_log_mel,
     mfcc,
@@ -54,7 +55,7 @@ def train_model(
     ### The target class number indicates which sound is present in the file.
 
     dataset_path = os.path.join("data", dataset_name)
-    arguments = {"n_fft": dft_window_size, "hop_length": hop_length}
+    arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "num_mels": n_mels}
     logging.info("==================================")
     logging.info("Features used: ")
     logging.info(f"Log mel spectogram: {log_mel}")
@@ -97,12 +98,20 @@ def train_model(
     ### One option is to create a Sequential model.
     in_features = np.sum([log_mel, delta_log_mel, mfcc, gfcc, cqt, chroma])
     assert in_features > 0
-    model = get_seq_model(in_features).to(device)
+    # model = get_seq_model(in_features).to(device)
+    model = piczak_model(in_features).to(device)
     # model = StupidModel(in_features)
 
     criterion = nn.NLLLoss()
-    optimizer = optim.Adam(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    # optimizer = optim.Adam(
+    #     model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    # )
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=learning_rate,
+        momentum=0.9,
+        weight_decay=weight_decay,
+        nesterov=True,
     )
 
     logging.info(
@@ -185,9 +194,10 @@ def train_model(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train on holdout.")
     parser.add_argument("--batch_size", default=64, type=int)
-    parser.add_argument("--learning_rate", default=0.0001, type=float)
-    parser.add_argument("--weight_decay", default=0.01, type=float)
-    parser.add_argument("--epochs", default=500, type=int)
+    parser.add_argument("--learning_rate", default=0.002, type=float)
+    parser.add_argument("--weight_decay", default=0.001, type=float)
+    parser.add_argument("--epochs", default=300, type=int)
+    parser.add_argument("--n_mels", default=128, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--log_mel", action="store_true")
@@ -210,6 +220,7 @@ if __name__ == "__main__":
         args.sampling_rate,
         args.dft_window_size,
         args.hop_length,
+        args.n_mels,
         args.log_mel,
         args.delta_log_mel,
         args.mfcc,

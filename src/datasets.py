@@ -93,8 +93,8 @@ class AudioDataset(torch.utils.data.Dataset):
                 log_mel_spectrogram = self.log_mel_spectrogram(audio, arguments).T
                 # Normalize - min max norm
                 log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
-                #adding a dimension to be able to stack several feature channels - input to CNN
-                log_mel_spectrogram = np.expand_dims(log_mel_spectrogram, axis=0) 
+                # adding a dimension to be able to stack several feature channels - input to CNN
+                log_mel_spectrogram = np.expand_dims(log_mel_spectrogram, axis=0)
                 features.append(log_mel_spectrogram)
             if delta_log_mel:
                 # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
@@ -169,12 +169,14 @@ class AudioDataset(torch.utils.data.Dataset):
             sr=arguments["sr"],
             n_fft=arguments["n_fft"],
             hop_length=arguments["hop_length"],
-            n_mels=128,
+            n_mels=arguments["num_mels"],
         )
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
         return log_mel_spectrogram
 
     def min_max_normalize(self, X):
+        # normalization_factor = 1 / np.max(np.abs(clip))
+        # clip = clip * normalization_factor
         return (X - np.min(X)) / (np.max(X) - np.min(X))
 
     def __len__(self):

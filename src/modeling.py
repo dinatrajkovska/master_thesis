@@ -150,6 +150,41 @@ def get_seq_model(in_features):
     )
 
 
+# https://www.karolpiczak.com/papers/Piczak2015-ESC-ConvNet.pdf
+def piczak_model(in_features):
+    return nn.Sequential(
+        nn.Conv2d(
+            in_channels=in_features,
+            out_channels=80,
+            kernel_size=(57, 6),
+            stride=(1, 1),
+            # padding=(0, 1),
+        ),
+        nn.LeakyReLU(),
+        # nn.Dropout(0.5),    try it with either one of these
+        nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
+        nn.Dropout(0.5),
+        nn.Conv2d(
+            in_channels=80,
+            out_channels=80,
+            kernel_size=(1, 3),
+            stride=(1, 1),
+            # padding=(0, 1),
+        ),
+        nn.LeakyReLU(),
+        nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
+        nn.Flatten(),
+        nn.Linear(148800, 5000), # 320! - chang
+        nn.LeakyReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(5000, 5000),
+        nn.LeakyReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(5000, 50),
+        nn.LogSoftmax(dim=-1),
+    )
+
+
 class StupidModel(nn.Module):
     def __init__(self, in_features):
         super(StupidModel, self).__init__()
