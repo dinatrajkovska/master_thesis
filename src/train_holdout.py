@@ -81,38 +81,31 @@ def train_model(
     logging.info(f"Constant-Q transform: {cqt}")
     logging.info(f"STFT chromagram: {chroma}")
     logging.info("==================================")
-    train_dataset = Subset(
-        AudioDataset(
-            dataset_path,
-            gammatones_path,
-            [1, 2, 3, 4],
-            sampling_rate,
-            arguments,
-            log_mel,
-            delta_log_mel,
-            mfcc,
-            gfcc,
-            cqt,
-            chroma,
-        ),
-        list(range(36)),
+    train_dataset = AudioDataset(
+        dataset_path,
+        gammatones_path,
+        [1, 2, 3, 4],
+        sampling_rate,
+        arguments,
+        log_mel,
+        delta_log_mel,
+        mfcc,
+        gfcc,
+        cqt,
+        chroma,
     )
-
-    val_dataset = Subset(
-        AudioDataset(
-            dataset_path,
-            gammatones_path,
-            [5],
-            sampling_rate,
-            arguments,
-            log_mel,
-            delta_log_mel,
-            mfcc,
-            gfcc,
-            cqt,
-            chroma,
-        ),
-        list(range(36)),
+    val_dataset = AudioDataset(
+        dataset_path,
+        gammatones_path,
+        [5],
+        sampling_rate,
+        arguments,
+        log_mel,
+        delta_log_mel,
+        mfcc,
+        gfcc,
+        cqt,
+        chroma,
     )
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)

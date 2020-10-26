@@ -126,18 +126,29 @@ class AudioDataset(torch.utils.data.Dataset):
                 # https://detly.github.io/gammatone/gtgram.html
                 gammatone_filename = filename.split(".")[0] + ".npy"
                 gammatone = np.load(os.path.join(gammatones_path, gammatone_filename)).T
+                gammatone = self.min_max_normalize(gammatone)
                 gammatone = np.expand_dims(gammatone, axis=0)
                 features.append(gammatone)
             if cqt:
                 # https://librosa.org/doc/latest/generated/librosa.cqt.html
                 # https://librosa.org/doc/latest/generated/librosa.feature.chroma_cqt.html
-                constant_q = librosa.feature.chroma_cqt(
-                    y=audio,
-                    sr=arguments["sr"],
-                    hop_length=arguments["hop_length"],
-                    n_chroma=128,
-                    bins_per_octave=128,
+                # constant_q = librosa.feature.chroma_cqt(
+                #     y=audio,
+                #     sr=arguments["sr"],
+                #     hop_length=arguments["hop_length"],
+                #     n_chroma=128,
+                #     bins_per_octave=128,
+                # ).T
+                constant_q = np.abs(
+                    librosa.cqt(
+                        audio,
+                        sr=arguments["sr"],
+                        hop_length=arguments["hop_length"],
+                        n_bins=128,
+                        bins_per_octave=128,
+                    )
                 ).T
+                constant_q = self.min_max_normalize(constant_q)
                 constant_q = np.expand_dims(constant_q, axis=0)
                 features.append(constant_q)
             if chromagram:
@@ -149,6 +160,7 @@ class AudioDataset(torch.utils.data.Dataset):
                     hop_length=arguments["hop_length"],
                     n_chroma=128,
                 ).T
+                chroma = self.min_max_normalize(chroma)
                 chroma = np.expand_dims(chroma, axis=0)
                 features.append(chroma)
 

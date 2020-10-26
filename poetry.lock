@@ -879,6 +879,14 @@ version = "19.0.2"
 
 [[package]]
 category = "main"
+description = "Quasi-hyperbolic optimization algorithms from Facebook AI Research."
+name = "qhoptim"
+optional = false
+python-versions = "*"
+version = "1.1.0"
+
+[[package]]
+category = "main"
 description = "Jupyter Qt console"
 name = "qtconsole"
 optional = false
@@ -1668,6 +1676,10 @@ pyzmq = [
     {file = "pyzmq-19.0.2-pp27-pypy_73-macosx_10_9_x86_64.whl", hash = "sha256:c1a31cd42905b405530e92bdb70a8a56f048c8a371728b8acf9d746ecd4482c0"},
     {file = "pyzmq-19.0.2-pp36-pypy36_pp73-macosx_10_9_x86_64.whl", hash = "sha256:a7e7f930039ee0c4c26e4dfee015f20bd6919cd8b97c9cd7afbde2923a5167b6"},
     {file = "pyzmq-19.0.2.tar.gz", hash = "sha256:296540a065c8c21b26d63e3cea2d1d57902373b16e4256afe46422691903a438"},
+]
+qhoptim = [
+    {file = "qhoptim-1.1.0-py3-none-any.whl", hash = "sha256:cdd9660b8310ef7749733db03fe372bf5453861ba9cb0aa31db59f6127b3ae00"},
+    {file = "qhoptim-1.1.0.tar.gz", hash = "sha256:e8578e2465d25f1c423a66d329a2c85b6bdfeae14cb95df183734ba0227fb1ca"},
 ]
 qtconsole = [
     {file = "qtconsole-4.7.7-py2.py3-none-any.whl", hash = "sha256:7a42af4b1c51d870b41e4a1b67e2e71296c0edd1b2f46c647ad67dff421c2726"},
