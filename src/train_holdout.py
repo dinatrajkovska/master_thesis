@@ -165,16 +165,15 @@ def train_model(
         with torch.no_grad():
             for _, audio, target in tqdm(val_loader):
                 audio, target = audio.to(device), target.to(device)
-                probs = model(audio)
-                prediction = torch.argmax(probs, dim=-1)
+                prediction = model(audio).argmax(-1)
                 for count, i in enumerate(range(0, prediction.size()[0], 9)):
                     prediction[count] = major_vote(prediction[i : i + 9])
-                prediction = prediction[: batch_size // 9]
+                t_prediction = prediction[: target.size()[0] // 9]
                 # Aggregate predictions and targets
-                target = target[::9]
-                cur_batch_size = target.size()[0]
-                predictions[index : index + cur_batch_size] = prediction.cpu().numpy()
-                targets[index : index + cur_batch_size] = target.cpu().numpy()
+                t_target = target[::9]
+                cur_batch_size = t_target.size()[0]
+                predictions[index : index + cur_batch_size] = t_prediction.cpu().numpy()
+                targets[index : index + cur_batch_size] = t_target.cpu().numpy()
                 index += cur_batch_size
 
             for i in range(predictions.shape[0]):
@@ -201,7 +200,7 @@ def train_model(
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
