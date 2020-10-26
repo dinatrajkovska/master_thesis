@@ -174,7 +174,7 @@ def piczak_model(in_features):
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
         nn.Flatten(),
-        nn.Linear(148800, 5000), # 320! - chang
+        nn.Linear(240, 5000),  # 320! - change
         nn.LeakyReLU(),
         nn.Dropout(0.5),
         nn.Linear(5000, 5000),

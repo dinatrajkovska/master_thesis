@@ -9,13 +9,29 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 import argparse
 import logging
+from typing import Dict
 
 from datasets import AudioDataset, target2name
 from modeling import get_seq_model, piczak_model
+
+
+def major_vote(mini_batch: torch.Tensor) -> int:
+    max_value_dict: Dict[int, int] = {}
+    for elem in mini_batch:
+        if elem not in max_value_dict:
+            max_value_dict[elem] = 0
+        max_value_dict[elem] += 1
+    max_val = 0
+    max_key = ""
+    for key, val in max_value_dict.items():
+        if val > max_val:
+            max_val = val
+            max_key = key
+    return max_key
 
 
 def train_model(
@@ -65,32 +81,38 @@ def train_model(
     logging.info(f"Constant-Q transform: {cqt}")
     logging.info(f"STFT chromagram: {chroma}")
     logging.info("==================================")
-    train_dataset = AudioDataset(
-        dataset_path,
-        gammatones_path,
-        [1, 2, 3, 4],
-        sampling_rate,
-        arguments,
-        log_mel,
-        delta_log_mel,
-        mfcc,
-        gfcc,
-        cqt,
-        chroma,
+    train_dataset = Subset(
+        AudioDataset(
+            dataset_path,
+            gammatones_path,
+            [1, 2, 3, 4],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+            gfcc,
+            cqt,
+            chroma,
+        ),
+        list(range(36)),
     )
 
-    val_dataset = AudioDataset(
-        dataset_path,
-        gammatones_path,
-        [5],
-        sampling_rate,
-        arguments,
-        log_mel,
-        delta_log_mel,
-        mfcc,
-        gfcc,
-        cqt,
-        chroma,
+    val_dataset = Subset(
+        AudioDataset(
+            dataset_path,
+            gammatones_path,
+            [5],
+            sampling_rate,
+            arguments,
+            log_mel,
+            delta_log_mel,
+            mfcc,
+            gfcc,
+            cqt,
+            chroma,
+        ),
+        list(range(36)),
     )
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
@@ -152,7 +174,11 @@ def train_model(
                 audio, target = audio.to(device), target.to(device)
                 probs = model(audio)
                 prediction = torch.argmax(probs, dim=-1)
+                for count, i in enumerate(range(0, prediction.size()[0], 9)):
+                    prediction[count] = major_vote(prediction[i : i + 9])
+                prediction = prediction[: batch_size // 9]
                 # Aggregate predictions and targets
+                target = target[::9]
                 cur_batch_size = target.size()[0]
                 predictions[index : index + cur_batch_size] = prediction.cpu().numpy()
                 targets[index : index + cur_batch_size] = target.cpu().numpy()
@@ -182,7 +208,7 @@ def train_model(
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
-                torch.save(model.state_dict(), save_model_path)
+                # torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
@@ -197,7 +223,7 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", default=0.002, type=float)
     parser.add_argument("--weight_decay", default=0.001, type=float)
     parser.add_argument("--epochs", default=300, type=int)
-    parser.add_argument("--n_mels", default=128, type=int)
+    parser.add_argument("--n_mels", default=60, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--log_mel", action="store_true")
