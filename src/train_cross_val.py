@@ -123,7 +123,9 @@ def train_model(
         )
         best_fold_accuracy = -1
         best_target2correct = {}
-        for epoch in tqdm(range(epochs)):
+        target2total = {}
+        cur_accuracy = 0
+        for _ in tqdm(range(epochs)):
             # Set model in train mode
             model.train(True)
             for _, audio, target in train_loader:

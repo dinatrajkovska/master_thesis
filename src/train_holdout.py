@@ -128,11 +128,9 @@ def train_model(
         weight_decay=weight_decay,
         nesterov=True,
     )
-
     logging.info(
         f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
     )
-
     best_accuracy = -1
     best_epoch = -1
     for epoch in range(epochs):
@@ -157,8 +155,8 @@ def train_model(
 
         # Set model in evaluation mode
         model.train(False)
-        predictions = np.zeros(len(val_dataset))
-        targets = np.zeros(len(val_dataset))
+        predictions = np.zeros(len(val_dataset) // 9)
+        targets = np.zeros(len(val_dataset) // 9)
         target2total = {}
         target2correct = {}
         index = 0
@@ -166,12 +164,13 @@ def train_model(
             for _, audio, target in tqdm(val_loader):
                 audio, target = audio.to(device), target.to(device)
                 prediction = model(audio).argmax(-1)
+                # DINA STAJ DESCRIPTIVE KOMENTAR STO PRAVI OVOJ DEL OD KODOT
+                t_prediction = torch.zeros(prediction.size()[0] // 9)
                 for count, i in enumerate(range(0, prediction.size()[0], 9)):
-                    prediction[count] = major_vote(prediction[i : i + 9])
-                t_prediction = prediction[: target.size()[0] // 9]
-                # Aggregate predictions and targets
+                    t_prediction[count] = major_vote(prediction[i : i + 9])
                 t_target = target[::9]
                 cur_batch_size = t_target.size()[0]
+                # Aggregate predictions and targets
                 predictions[index : index + cur_batch_size] = t_prediction.cpu().numpy()
                 targets[index : index + cur_batch_size] = t_target.cpu().numpy()
                 index += cur_batch_size
