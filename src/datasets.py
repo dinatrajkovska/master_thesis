@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import librosa
 import os
+from natsort import natsorted
 
 # https://github.com/karolpiczak/ESC-50
 
@@ -79,7 +80,7 @@ class AudioDataset(torch.utils.data.Dataset):
         self.inputs = []
         self.targets = []
         self.paths = []
-        for filename in tqdm(os.listdir(directory_path)):
+        for filename in tqdm(natsorted(os.listdir(directory_path))):
             if int(filename[0]) not in dataset_folds:
                 continue
             path = os.path.join(directory_path, filename)
