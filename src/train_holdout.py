@@ -22,9 +22,10 @@ from modeling import get_seq_model, piczak_model
 def major_vote(mini_batch: torch.Tensor) -> int:
     max_value_dict: Dict[int, int] = {}
     for elem in mini_batch:
-        if elem not in max_value_dict:
-            max_value_dict[elem] = 0
-        max_value_dict[elem] += 1
+        item = elem.item()
+        if item not in max_value_dict:
+            max_value_dict[item] = 0
+        max_value_dict[item] += 1
     max_val = 0
     max_key = ""
     for key, val in max_value_dict.items():

@@ -161,7 +161,6 @@ def piczak_model(in_features):
             # padding=(0, 1),
         ),
         nn.LeakyReLU(),
-        # nn.Dropout(0.5),    try it with either one of these
         nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
         nn.Dropout(0.5),
         nn.Conv2d(
@@ -174,7 +173,7 @@ def piczak_model(in_features):
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
         nn.Flatten(),
-        nn.Linear(240, 5000),  # 320! - change
+        nn.Linear(240, 5000),
         nn.LeakyReLU(),
         nn.Dropout(0.5),
         nn.Linear(5000, 5000),
