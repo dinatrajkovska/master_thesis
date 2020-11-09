@@ -208,10 +208,10 @@ def piczak_batchnorm_model(in_features):
         nn.Flatten(),
         nn.Linear(240, 5000),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=5000),
+        nn.BatchNorm1d(num_features=5000),
         nn.Linear(5000, 5000),
         nn.LeakyReLU(),
-        nn.BatchNorm2d(num_features=5000),
+        nn.BatchNorm1d(num_features=5000),
         nn.Linear(5000, 50),
         nn.LogSoftmax(dim=-1),
     )
