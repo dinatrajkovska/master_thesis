@@ -16,7 +16,7 @@ import logging
 from typing import Dict
 
 from datasets import AudioDataset, target2name
-from modeling import get_seq_model, piczak_model
+from modeling import get_seq_model, piczak_model, piczak_batchnorm_model
 
 
 def major_vote(mini_batch: torch.Tensor) -> int:
@@ -95,6 +95,7 @@ def train_model(
         cqt,
         chroma,
     )
+
     val_dataset = AudioDataset(
         dataset_path,
         gammatones_path,
@@ -108,6 +109,7 @@ def train_model(
         cqt,
         chroma,
     )
+
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
@@ -115,7 +117,7 @@ def train_model(
     in_features = np.sum([log_mel, delta_log_mel, mfcc, gfcc, cqt, chroma])
     assert in_features > 0
     # model = get_seq_model(in_features).to(device)
-    model = piczak_model(in_features).to(device)
+    model = piczak_batchnorm_model(in_features).to(device)
     # model = StupidModel(in_features)
 
     criterion = nn.NLLLoss()
