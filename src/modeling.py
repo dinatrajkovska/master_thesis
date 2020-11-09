@@ -1,6 +1,73 @@
 from torch import nn
 
 
+# https://www.karolpiczak.com/papers/Piczak2015-ESC-ConvNet.pdf
+def piczak_model(in_features):
+    return nn.Sequential(
+        nn.Conv2d(
+            in_channels=in_features,
+            out_channels=80,
+            kernel_size=(57, 6),
+            stride=(1, 1),
+            # padding=(0, 1),
+        ),
+        nn.LeakyReLU(),
+        nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
+        nn.Dropout(0.5),
+        nn.Conv2d(
+            in_channels=80,
+            out_channels=80,
+            kernel_size=(1, 3),
+            stride=(1, 1),
+            # padding=(0, 1),
+        ),
+        nn.LeakyReLU(),
+        nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
+        nn.Flatten(),
+        nn.Linear(240, 5000),
+        nn.LeakyReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(5000, 5000),
+        nn.LeakyReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(5000, 50),
+        nn.LogSoftmax(dim=-1),
+    )
+
+
+def piczak_batchnorm_model(in_features):
+    return nn.Sequential(
+        nn.Conv2d(
+            in_channels=in_features,
+            out_channels=80,
+            kernel_size=(57, 6),
+            stride=(1, 1),
+            # padding=(0, 1),
+        ),
+        nn.LeakyReLU(),
+        nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
+        nn.BatchNorm2d(num_features=80),
+        nn.Conv2d(
+            in_channels=80,
+            out_channels=80,
+            kernel_size=(1, 3),
+            stride=(1, 1),
+            # padding=(0, 1),
+        ),
+        nn.LeakyReLU(),
+        nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
+        nn.Flatten(),
+        nn.Linear(240, 5000),
+        nn.LeakyReLU(),
+        nn.BatchNorm1d(num_features=5000),
+        nn.Linear(5000, 5000),
+        nn.LeakyReLU(),
+        nn.BatchNorm1d(num_features=5000),
+        nn.Linear(5000, 50),
+        nn.LogSoftmax(dim=-1),
+    )
+
+
 def get_seq_model(in_features):
     return nn.Sequential(
         # Block 1
@@ -146,73 +213,6 @@ def get_seq_model(in_features):
         nn.LeakyReLU(),
         nn.Dropout(0.5),
         nn.Linear(512, 50),
-        nn.LogSoftmax(dim=-1),
-    )
-
-
-# https://www.karolpiczak.com/papers/Piczak2015-ESC-ConvNet.pdf
-def piczak_model(in_features):
-    return nn.Sequential(
-        nn.Conv2d(
-            in_channels=in_features,
-            out_channels=80,
-            kernel_size=(57, 6),
-            stride=(1, 1),
-            # padding=(0, 1),
-        ),
-        nn.LeakyReLU(),
-        nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
-        nn.Dropout(0.5),
-        nn.Conv2d(
-            in_channels=80,
-            out_channels=80,
-            kernel_size=(1, 3),
-            stride=(1, 1),
-            # padding=(0, 1),
-        ),
-        nn.LeakyReLU(),
-        nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
-        nn.Flatten(),
-        nn.Linear(240, 5000),
-        nn.LeakyReLU(),
-        nn.Dropout(0.5),
-        nn.Linear(5000, 5000),
-        nn.LeakyReLU(),
-        nn.Dropout(0.5),
-        nn.Linear(5000, 50),
-        nn.LogSoftmax(dim=-1),
-    )
-
-
-def piczak_batchnorm_model(in_features):
-    return nn.Sequential(
-        nn.Conv2d(
-            in_channels=in_features,
-            out_channels=80,
-            kernel_size=(57, 6),
-            stride=(1, 1),
-            # padding=(0, 1),
-        ),
-        nn.LeakyReLU(),
-        nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
-        nn.BatchNorm2d(num_features=80),
-        nn.Conv2d(
-            in_channels=80,
-            out_channels=80,
-            kernel_size=(1, 3),
-            stride=(1, 1),
-            # padding=(0, 1),
-        ),
-        nn.LeakyReLU(),
-        nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
-        nn.Flatten(),
-        nn.Linear(240, 5000),
-        nn.LeakyReLU(),
-        nn.BatchNorm1d(num_features=5000),
-        nn.Linear(5000, 5000),
-        nn.LeakyReLU(),
-        nn.BatchNorm1d(num_features=5000),
-        nn.Linear(5000, 50),
         nn.LogSoftmax(dim=-1),
     )
 
