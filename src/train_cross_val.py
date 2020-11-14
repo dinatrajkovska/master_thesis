@@ -21,7 +21,6 @@ from modeling import get_seq_model
 def train_model(
     dataset_name,
     gammatones_path,
-    sampling_rate,
     dft_window_size,
     hop_length,
     log_mel,
@@ -79,7 +78,6 @@ def train_model(
             dataset_path,
             gammatones_path,
             split[0],
-            sampling_rate,
             arguments,
             log_mel,
             delta_log_mel,
@@ -92,7 +90,6 @@ def train_model(
             dataset_path,
             gammatones_path,
             split[1],
-            sampling_rate,
             arguments,
             log_mel,
             delta_log_mel,
@@ -205,7 +202,6 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--learning_rate", default=0.0001, type=float)
     parser.add_argument("--weight_decay", default=0.01, type=float)
-    parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument(
         "--gammatones_path", default="data/gammatone_features", type=str
@@ -224,7 +220,6 @@ if __name__ == "__main__":
     train_model(
         args.dataset_name,
         args.gammatones_path,
-        args.sampling_rate,
         args.dft_window_size,
         args.hop_length,
         args.log_mel,

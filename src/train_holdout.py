@@ -38,7 +38,6 @@ def major_vote(mini_batch: torch.Tensor) -> int:
 def train_model(
     dataset_name,
     gammatones_path,
-    sampling_rate,
     dft_window_size,
     hop_length,
     n_mels,
@@ -86,7 +85,6 @@ def train_model(
         dataset_path,
         gammatones_path,
         [1, 2, 3, 4],
-        sampling_rate,
         arguments,
         log_mel,
         delta_log_mel,
@@ -100,7 +98,6 @@ def train_model(
         dataset_path,
         gammatones_path,
         [5],
-        sampling_rate,
         arguments,
         log_mel,
         delta_log_mel,
@@ -225,7 +222,6 @@ if __name__ == "__main__":
     parser.add_argument("--cqt", action="store_true")
     parser.add_argument("--chroma", action="store_true")
     parser.add_argument("--gfcc", action="store_true")
-    parser.add_argument("--sampling_rate", default=None, type=int)
     parser.add_argument("--dataset_name", default="data_50", type=str)
     parser.add_argument(
         "--gammatones_path", default="data/gammatone_features", type=str
@@ -237,7 +233,6 @@ if __name__ == "__main__":
     train_model(
         args.dataset_name,
         args.gammatones_path,
-        args.sampling_rate,
         args.dft_window_size,
         args.hop_length,
         args.n_mels,

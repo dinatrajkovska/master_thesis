@@ -68,7 +68,6 @@ class AudioDataset(torch.utils.data.Dataset):
         directory_path,
         gammatones_path,
         dataset_folds,
-        sampling_rate,
         arguments,
         log_mel,
         delta_log_mel,
@@ -78,7 +77,6 @@ class AudioDataset(torch.utils.data.Dataset):
         chromagram,
     ):
         self.gammatones_path = gammatones_path
-        self.sampling_rate = sampling_rate
         self.arguments = arguments
         self.log_mel = log_mel
         self.delta_log_mel = delta_log_mel
@@ -97,8 +95,7 @@ class AudioDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
 
-        (audio, sr) = librosa.load(self.paths[idx], sr=self.sampling_rate)
-        self.arguments["sr"] = sr
+        audio = np.load(self.paths[idx])
         if audio.ndim > 1:
             audio = np.mean(audio, axis=1)
         features = []
