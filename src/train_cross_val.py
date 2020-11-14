@@ -10,7 +10,6 @@ from torch import nn
 from qhoptim.pyt import QHAdam
 from torch.utils.data import DataLoader
 import argparse
-import os
 import logging
 from tqdm import tqdm
 
@@ -19,7 +18,7 @@ from modeling import get_seq_model
 
 
 def train_model(
-    dataset_name,
+    dataset_path,
     gammatones_path,
     dft_window_size,
     hop_length,
@@ -71,7 +70,6 @@ def train_model(
     logging.info(f"Constant-Q transform: {cqt}")
     logging.info(f"STFT chromagram: {chroma}")
     logging.info("==================================")
-    dataset_path = os.path.join("data", dataset_name)
     for split_num, split in enumerate(data_splits):
         logging.info(f"----------- Starting split number {split_num + 1} -----------")
         train_dataset = AudioDataset(
@@ -202,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", default=500, type=int)
     parser.add_argument("--learning_rate", default=0.0001, type=float)
     parser.add_argument("--weight_decay", default=0.01, type=float)
-    parser.add_argument("--dataset_name", default="data_50", type=str)
+    parser.add_argument("--dataset_path", default="data/data_50/", type=str)
     parser.add_argument(
         "--gammatones_path", default="data/gammatone_features", type=str
     )
@@ -218,7 +216,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     train_model(
-        args.dataset_name,
+        args.dataset_path,
         args.gammatones_path,
         args.dft_window_size,
         args.hop_length,

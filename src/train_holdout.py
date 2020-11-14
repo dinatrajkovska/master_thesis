@@ -36,7 +36,7 @@ def major_vote(mini_batch: torch.Tensor) -> int:
 
 
 def train_model(
-    dataset_name,
+    dataset_path,
     gammatones_path,
     dft_window_size,
     hop_length,
@@ -70,7 +70,6 @@ def train_model(
     ### Now, for simplicity, we take folds 1-3 as train folds, 4 as validation fold and 5 as test fold.
     ### The target class number indicates which sound is present in the file.
 
-    dataset_path = os.path.join("data", dataset_name)
     arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "num_mels": n_mels}
     logging.info("==================================")
     logging.info("Features used: ")
@@ -222,7 +221,7 @@ if __name__ == "__main__":
     parser.add_argument("--cqt", action="store_true")
     parser.add_argument("--chroma", action="store_true")
     parser.add_argument("--gfcc", action="store_true")
-    parser.add_argument("--dataset_name", default="data_50", type=str)
+    parser.add_argument("--dataset_path", default="data/data_50/", type=str)
     parser.add_argument(
         "--gammatones_path", default="data/gammatone_features", type=str
     )
@@ -231,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_filepath", type=str, default=None)
     args = parser.parse_args()
     train_model(
-        args.dataset_name,
+        args.dataset_path,
         args.gammatones_path,
         args.dft_window_size,
         args.hop_length,
