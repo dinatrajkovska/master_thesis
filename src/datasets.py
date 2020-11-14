@@ -125,9 +125,7 @@ class AudioDataset(torch.utils.data.Dataset):
             features.append(delta_log_mel_spectrogram)
         if self.mfcc:
             # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
-            mel_frequency_coefficients = librosa.feature.mfcc(
-                y=audio, n_mfcc=128, sr=self.arguments["sr"]
-            ).T
+            mel_frequency_coefficients = librosa.feature.mfcc(y=audio, n_mfcc=128).T
             mel_frequency_coefficients = self.min_max_normalize(
                 mel_frequency_coefficients
             )
@@ -157,7 +155,6 @@ class AudioDataset(torch.utils.data.Dataset):
             constant_q = np.abs(
                 librosa.cqt(
                     audio,
-                    sr=self.arguments["sr"],
                     hop_length=self.arguments["hop_length"],
                     n_bins=128,
                     bins_per_octave=128,
@@ -170,7 +167,6 @@ class AudioDataset(torch.utils.data.Dataset):
             # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
             chroma = librosa.feature.chroma_stft(
                 y=audio,
-                sr=self.arguments["sr"],
                 n_fft=self.arguments["n_fft"],
                 hop_length=self.arguments["hop_length"],
                 n_chroma=128,
@@ -194,7 +190,6 @@ class AudioDataset(torch.utils.data.Dataset):
         # Convert to mel spectrogram
         mel_spectrogram = librosa.feature.melspectrogram(
             S=np.abs(spectrogram) ** 2,
-            sr=arguments["sr"],
             n_fft=arguments["n_fft"],
             hop_length=arguments["hop_length"],
             n_mels=arguments["num_mels"],
