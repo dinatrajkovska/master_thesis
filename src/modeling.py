@@ -1,4 +1,5 @@
 from torch import nn
+from torch.nn.modules.dropout import Dropout
 
 
 # https://www.karolpiczak.com/papers/Piczak2015-ESC-ConvNet.pdf
@@ -76,55 +77,58 @@ class SwapAxes(nn.Module):
         return x.transpose(2, 1)
 
 
-def envnet_v2(in_features):
+def envnet_v2():
     return nn.Sequential(
         # Conv 1 & 2
-        nn.Conv2d(
-            in_channels=in_features, out_channels=32, kernel_size=(1, 64), stride=(1, 2)
-        ),
+        nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(1, 64), stride=(1, 2)),
+        nn.BatchNorm2d(num_features=32),
         nn.LeakyReLU(),
         nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(1, 16), stride=(1, 2)),
+        nn.BatchNorm2d(num_features=64),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 64), stride=(1, 64)),
-        nn.LeakyReLU(),
         SwapAxes(),
         # Conv 3 & 4
-        nn.Conv2d(in_channels=64, out_channels=32, kernel_size=(8, 8), stride=(1, 1)),
+        nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(8, 8), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=32),
         nn.LeakyReLU(),
         nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(8, 8), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=32),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(5, 3), stride=(5, 3)),
-        nn.LeakyReLU(),
         # Conv 5 & 6
         nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(1, 4), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=64),
         nn.LeakyReLU(),
         nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(1, 4), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=64),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2)),
-        nn.LeakyReLU(),
         # Conv 7 & 8
         nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(1, 2), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=128),
         nn.LeakyReLU(),
         nn.Conv2d(in_channels=128, out_channels=128, kernel_size=(1, 2), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=128),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2)),
-        nn.LeakyReLU(),
         # Conv 9 & 10
         nn.Conv2d(in_channels=128, out_channels=256, kernel_size=(1, 2), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=256),
         nn.LeakyReLU(),
         nn.Conv2d(in_channels=256, out_channels=256, kernel_size=(1, 2), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=256),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 2), stride=(1, 2)),
-        nn.LeakyReLU(),
+        # FC
         nn.Flatten(),
-        nn.Linear(240, 4096),  # change num of input filters
+        nn.Linear(256 * 10 * 8, 4096),  # change num of input filters
         nn.LeakyReLU(),
-        nn.BatchNorm1d(num_features=5000),
+        nn.Dropout(0.5),
         nn.Linear(4096, 4096),
         nn.LeakyReLU(),
-        nn.BatchNorm1d(num_features=5000),
+        nn.Dropout(0.5),
         nn.Linear(4096, 50),
-        nn.LogSoftmax(dim=-1),
     )
 
 
