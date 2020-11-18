@@ -1,9 +1,13 @@
-import torch
-import numpy as np
-from tqdm import tqdm
-import librosa
 import os
+import random
+from typing import List
+
+import librosa
+import numpy as np
+import torch
 from natsort import natsorted
+from torch.utils.data import Dataset as TorchDataset
+from tqdm import tqdm
 
 # https://github.com/karolpiczak/ESC-50
 
@@ -62,7 +66,7 @@ target2name = {
 }
 
 
-class AudioDataset(torch.utils.data.Dataset):
+class AudioDataset(TorchDataset):
     def __init__(
         self,
         directory_path,
@@ -96,7 +100,6 @@ class AudioDataset(torch.utils.data.Dataset):
             self.paths.append(path)
 
     def __getitem__(self, idx):
-
         (audio, sr) = librosa.load(self.paths[idx], sr=self.sampling_rate)
         self.arguments["sr"] = sr
         if audio.ndim > 1:
@@ -212,3 +215,69 @@ class AudioDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.paths)
+
+
+class EnvNetDataset(TorchDataset):
+    def __init__(self, dataset_path: str, dataset_folds: List[int], train: bool = True):
+        self.train = train
+        self.paths = []
+        for filename in tqdm(natsorted(os.listdir(dataset_path))):
+            if int(filename[0]) not in dataset_folds:
+                continue
+            path = os.path.join(dataset_path, filename)
+            self.paths.append(path)
+
+    def __len__(self) -> int:
+        return len(self.paths)
+
+    def __getitem__(self, idx: int):
+        # Obtain input
+        audio = np.load(self.paths[idx])
+        indices = np.nonzero(audio)
+        first_index = indices[0].min()
+        last_index = indices[0].max()
+        audio = audio[first_index : last_index + 1]
+        # Pad audio
+        audio = self.padding(audio, 66650 // 2)
+        if self.train:
+            # Random crop
+            audio = self.random_crop(audio, 66650)
+            # Normalize audio
+            audio = self.normalize(audio, 32768)
+            # Prepare audio
+            audio = torch.from_numpy(audio).unsqueeze(0).unsqueeze(0)
+        else:
+            # Normalize audio
+            audio = self.normalize(audio, 32768)
+            # Multi-crop audio
+            audio = self.multi_crop(audio, 66650, 10)
+            # Prepare audio
+            audio = torch.from_numpy(audio).unsqueeze(1).unsqueeze(1)
+
+        filename = os.path.split(self.paths[idx])[-1]
+        label = int(filename.split(".")[0].split("-")[-1])
+
+        return audio, label
+
+    @staticmethod
+    def padding(sound, pad):
+        # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L7
+        return np.pad(sound, pad, "constant")
+
+    @staticmethod
+    def normalize(sound, factor):
+        # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L23
+        return sound / factor
+
+    @staticmethod
+    def multi_crop(sound, input_length, n_crops):
+        # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L58
+        stride = (len(sound) - input_length) // (n_crops - 1)
+        sounds = [sound[stride * i : stride * i + input_length] for i in range(n_crops)]
+        return np.array(sounds)
+
+    @staticmethod
+    def random_crop(sound, size):
+        org_size = len(sound)
+        start = random.randint(0, org_size - size)
+        return sound[start : start + size]
