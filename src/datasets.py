@@ -236,12 +236,12 @@ class EnvNetDataset(TorchDataset):
             # Random crop
             audio = self.random_crop(audio, 66650)
             # Normalize audio
-            audio = self.normalize(audio, 32768)
+            # audio = self.normalize(audio, 32768.0)
             # Prepare audio
             audio = torch.from_numpy(audio).unsqueeze(0).unsqueeze(0)
         else:
             # Normalize audio
-            audio = self.normalize(audio, 32768)
+            # audio = self.normalize(audio, 32768.0)
             # Multi-crop audio
             audio = self.multi_crop(audio, 66650, 10)
             # Prepare audio
