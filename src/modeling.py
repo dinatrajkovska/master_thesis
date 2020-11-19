@@ -6,22 +6,12 @@ from torch.nn.modules.dropout import Dropout
 def piczak_model(in_features):
     return nn.Sequential(
         nn.Conv2d(
-            in_channels=in_features,
-            out_channels=80,
-            kernel_size=(57, 6),
-            stride=(1, 1),
-            # padding=(0, 1),
+            in_channels=in_features, out_channels=80, kernel_size=(57, 6), stride=(1, 1)
         ),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
         nn.Dropout(0.5),
-        nn.Conv2d(
-            in_channels=80,
-            out_channels=80,
-            kernel_size=(1, 3),
-            stride=(1, 1),
-            # padding=(0, 1),
-        ),
+        nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(1, 3), stride=(1, 1)),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
         nn.Flatten(),
@@ -32,41 +22,39 @@ def piczak_model(in_features):
         nn.LeakyReLU(),
         nn.Dropout(0.5),
         nn.Linear(5000, 50),
-        nn.LogSoftmax(dim=-1),
     )
 
 
 def piczak_batchnorm_model(in_features):
     return nn.Sequential(
         nn.Conv2d(
-            in_channels=in_features,
-            out_channels=80,
-            kernel_size=(57, 6),
-            stride=(1, 1),
-            # padding=(0, 1),
+            in_channels=in_features, out_channels=80, kernel_size=(57, 6), stride=(1, 1)
         ),
+        nn.BatchNorm2d(num_features=80),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
+        nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(1, 3), stride=(1, 1)),
         nn.BatchNorm2d(num_features=80),
-        nn.Conv2d(
-            in_channels=80,
-            out_channels=80,
-            kernel_size=(1, 3),
-            stride=(1, 1),
-            # padding=(0, 1),
-        ),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
         nn.Flatten(),
         nn.Linear(240, 5000),
         nn.LeakyReLU(),
-        nn.BatchNorm1d(num_features=5000),
+        nn.Dropout(0.5),
         nn.Linear(5000, 5000),
         nn.LeakyReLU(),
-        nn.BatchNorm1d(num_features=5000),
+        nn.Dropout(0.5),
         nn.Linear(5000, 50),
-        nn.LogSoftmax(dim=-1),
     )
+
+
+def pitzak_factory(model_type: str, in_features):
+    if model_type == "regular":
+        return piczak_model(in_features)
+    elif model_type == "batch_norm":
+        return piczak_batchnorm_model(in_features)
+    else:
+        raise ValueError(f"Invalid model type: {model_type}")
 
 
 class SwapAxes(nn.Module):

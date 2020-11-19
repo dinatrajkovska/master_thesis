@@ -73,6 +73,7 @@ class AudioDataset(TorchDataset):
         gammatones_path,
         dataset_folds,
         arguments,
+        sampling_rate,
         log_mel,
         delta_log_mel,
         mfcc,
@@ -88,7 +89,7 @@ class AudioDataset(TorchDataset):
         self.gfcc = gfcc
         self.cqt = cqt
         self.chromagram = chromagram
-
+        self.sampling_rate = sampling_rate
         self.paths = []
 
         for filename in tqdm(natsorted(os.listdir(directory_path))):
@@ -149,13 +150,6 @@ class AudioDataset(TorchDataset):
         if self.cqt:
             # https://librosa.org/doc/latest/generated/librosa.cqt.html
             # https://librosa.org/doc/latest/generated/librosa.feature.chroma_cqt.html
-            # constant_q = librosa.feature.chroma_cqt(
-            #     y=audio,
-            #     sr=arguments["sr"],
-            #     hop_length=arguments["hop_length"],
-            #     n_chroma=128,
-            #     bins_per_octave=128,
-            # ).T
             constant_q = np.abs(
                 librosa.cqt(
                     audio,
@@ -202,8 +196,6 @@ class AudioDataset(TorchDataset):
         return log_mel_spectrogram
 
     def min_max_normalize(self, X):
-        # normalization_factor = 1 / np.max(np.abs(clip))
-        # clip = clip * normalization_factor
         return (X - np.min(X)) / (np.max(X) - np.min(X) + 1e-15)
 
     def __len__(self):

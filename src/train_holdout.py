@@ -1,22 +1,15 @@
-### IMPORTANT: this code might contain bugs! Go through each line of code and verify if it does the right thing!
-
-### To be able to import the necessary packages, you can do one of two things:
-### 1. Change your .bashrc file so you can import globally installed packages (such as TensorFlow)
-### 2. Install the packages locally
-### How to do this is described in the speech wiki. If you have questions about this, just ask me.
-import os
 import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 import argparse
 import logging
 from typing import Dict
 
 from datasets import AudioDataset, target2name
-from modeling import get_seq_model, piczak_model, piczak_batchnorm_model
+from modeling import pitzak_factory
 
 
 def major_vote(mini_batch: torch.Tensor) -> int:
@@ -35,96 +28,72 @@ def major_vote(mini_batch: torch.Tensor) -> int:
     return max_key
 
 
-def train_model(
-    dataset_path,
-    gammatones_path,
-    dft_window_size,
-    hop_length,
-    n_mels,
-    log_mel,
-    delta_log_mel,
-    mfcc,
-    gfcc,
-    cqt,
-    chroma,
-    learning_rate,
-    weight_decay,
-    batch_size,
-    epochs,
-    save_model_path,
-    log_filepath,
-):
+def train_model(args):
     # Set up logging
-    if log_filepath:
-        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    if args.log_filepath:
+        logging.basicConfig(
+            level=logging.INFO, filename=args.log_filepath, filemode="w"
+        )
     else:
         logging.basicConfig(level=logging.INFO)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"-------- Using device {device} --------")
-    ### Firstly, you need to load your data. In this example, we load the ESC-10 data set.
-    ### The name of each file in the directory for this data set follows a pattern:
-    ### {fold number}-{file id}-{take number}-{target class number}
-    ### You can ignore take number and file id for now.
-    ### The fold number indicates which test fold the file belongs to, in order to be able to perform cross-validation.
-    ### You can look up information about cross-validation online.
-    ### Now, for simplicity, we take folds 1-3 as train folds, 4 as validation fold and 5 as test fold.
-    ### The target class number indicates which sound is present in the file.
 
-    arguments = {"n_fft": dft_window_size, "hop_length": hop_length, "num_mels": n_mels}
+    arguments = {
+        "n_fft": args.dft_window_size,
+        "hop_length": args.hop_length,
+        "num_mels": args.n_mels,
+    }
     logging.info("==================================")
     logging.info("Features used: ")
-    logging.info(f"Log mel spectogram: {log_mel}")
-    logging.info(f"Delta log mel spectogram: {delta_log_mel}")
-    logging.info(f"Mel-frequency cepstral coefficients: {mfcc}")
-    logging.info(f"Gammatone-frequency cepstral coefficients: {gfcc}")
-    logging.info(f"Constant-Q transform: {cqt}")
-    logging.info(f"STFT chromagram: {chroma}")
+    logging.info(f"Log mel spectogram: {args.log_mel}")
+    logging.info(f"Delta log mel spectogram: {args.delta_log_mel}")
+    logging.info(f"Mel-frequency cepstral coefficients: {args.mfcc}")
+    logging.info(f"Gammatone-frequency cepstral coefficients: {args.gfcc}")
+    logging.info(f"Constant-Q transform: {args.cqt}")
+    logging.info(f"STFT chromagram: {args.chroma}")
     logging.info("==================================")
     train_dataset = AudioDataset(
-        dataset_path,
-        gammatones_path,
+        args.dataset_path,
+        args.gammatones_path,
         [1, 2, 3, 4],
         arguments,
-        log_mel,
-        delta_log_mel,
-        mfcc,
-        gfcc,
-        cqt,
-        chroma,
+        args.sampling_rate,
+        args.log_mel,
+        args.delta_log_mel,
+        args.mfcc,
+        args.gfcc,
+        args.cqt,
+        args.chroma,
     )
 
     val_dataset = AudioDataset(
-        dataset_path,
-        gammatones_path,
+        args.dataset_path,
+        args.gammatones_path,
         [5],
         arguments,
-        log_mel,
-        delta_log_mel,
-        mfcc,
-        gfcc,
-        cqt,
-        chroma,
+        args.sampling_rate,
+        args.log_mel,
+        args.delta_log_mel,
+        args.mfcc,
+        args.gfcc,
+        args.cqt,
+        args.chroma,
     )
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size)
-
-    ### One option is to create a Sequential model.
-    in_features = np.sum([log_mel, delta_log_mel, mfcc, gfcc, cqt, chroma])
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size)
+    in_features = np.sum(
+        [args.log_mel, args.delta_log_mel, args.mfcc, args.gfcc, args.cqt, args.chroma]
+    )
     assert in_features > 0
-    # model = get_seq_model(in_features).to(device)
-    model = piczak_batchnorm_model(in_features).to(device)
-    # model = StupidModel(in_features)
-
-    criterion = nn.NLLLoss()
-    # optimizer = optim.Adam(
-    #     model.parameters(), lr=learning_rate, weight_decay=weight_decay
-    # )
+    model = pitzak_factory(args.model_type, in_features).to(device)
+    criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(),
-        lr=learning_rate,
+        lr=args.learning_rate,
         momentum=0.9,
-        weight_decay=weight_decay,
+        weight_decay=args.weight_decay,
         nesterov=True,
     )
     logging.info(
@@ -132,7 +101,7 @@ def train_model(
     )
     best_accuracy = -1
     best_epoch = -1
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
@@ -163,7 +132,6 @@ def train_model(
             for _, audio, target in tqdm(val_loader):
                 audio, target = audio.to(device), target.to(device)
                 prediction = model(audio).argmax(-1)
-                # DINA STAJ DESCRIPTIVE KOMENTAR STO PRAVI OVOJ DEL OD KODOT
                 t_prediction = torch.zeros(prediction.size()[0] // 9)
                 for count, i in enumerate(range(0, prediction.size()[0], 9)):
                     t_prediction[count] = major_vote(prediction[i : i + 9])
@@ -173,7 +141,7 @@ def train_model(
                 predictions[index : index + cur_batch_size] = t_prediction.cpu().numpy()
                 targets[index : index + cur_batch_size] = t_target.cpu().numpy()
                 index += cur_batch_size
-
+            print(predictions, targets)
             for i in range(predictions.shape[0]):
                 target = targets[i]
                 pred = predictions[i]
@@ -198,7 +166,7 @@ def train_model(
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
-                torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
@@ -222,29 +190,14 @@ if __name__ == "__main__":
     parser.add_argument("--chroma", action="store_true")
     parser.add_argument("--gfcc", action="store_true")
     parser.add_argument("--dataset_path", default="data/data_50/", type=str)
+    parser.add_argument("--model_type", default="regular", type=str)
     parser.add_argument(
         "--gammatones_path", default="data/gammatone_features", type=str
     )
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
+    parser.add_argument("--sampling_rate", type=int, default=None)
     args = parser.parse_args()
-    train_model(
-        args.dataset_path,
-        args.gammatones_path,
-        args.dft_window_size,
-        args.hop_length,
-        args.n_mels,
-        args.log_mel,
-        args.delta_log_mel,
-        args.mfcc,
-        args.gfcc,
-        args.cqt,
-        args.chroma,
-        args.learning_rate,
-        args.weight_decay,
-        args.batch_size,
-        args.epochs,
-        args.save_model_path,
-        args.log_filepath,
-    )
+    train_model(args)
+
