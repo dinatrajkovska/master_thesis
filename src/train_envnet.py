@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from datasets import EnvNetDataset, target2name
 from modeling import envnet_v2
+from schedule import get_linear_schedule_with_warmup
 
 
 def train_model(args):
@@ -38,7 +39,9 @@ def train_model(args):
         weight_decay=args.weight_decay,
         nesterov=True,
     )
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=300, gamma=0.1)
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=args.epochs
+    )
     logging.info(
         f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
     )
@@ -119,7 +122,7 @@ def train_model(args):
                 torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
-                
+
         scheduler.step()
 
     logging.info("===========================")
@@ -136,5 +139,6 @@ if __name__ == "__main__":
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--dataset_path", default="data_50", type=str)
     parser.add_argument("--log_filepath", type=str, default=None)
+    parser.add_argument("--warmup_steps", type=int, default=20)
     args = parser.parse_args()
     train_model(args)
