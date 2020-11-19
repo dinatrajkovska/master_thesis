@@ -38,6 +38,7 @@ def train_model(args):
         weight_decay=args.weight_decay,
         nesterov=True,
     )
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=300, gamma=0.1)
     logging.info(
         f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
     )
@@ -118,6 +119,8 @@ def train_model(args):
                 torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
+                
+        scheduler.step()
 
     logging.info("===========================")
     logging.info(f"Best total accuracy {best_accuracy} on epoch {best_epoch}")
