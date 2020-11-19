@@ -29,7 +29,7 @@ def train_model(args):
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
-    model = envnet_v2()
+    model = envnet_v2().to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(),
