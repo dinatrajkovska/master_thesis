@@ -9,7 +9,7 @@ import logging
 from typing import Dict
 
 from datasets import AudioDataset, target2name
-from modeling import pitzak_factory
+from modeling import piczak_factory
 
 
 def major_vote(mini_batch: torch.Tensor) -> int:
@@ -87,7 +87,7 @@ def train_model(args):
         [args.log_mel, args.delta_log_mel, args.mfcc, args.gfcc, args.cqt, args.chroma]
     )
     assert in_features > 0
-    model = pitzak_factory(args.model_type, in_features).to(device)
+    model = piczak_factory(args.model_type, in_features).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(),
@@ -95,6 +95,9 @@ def train_model(args):
         momentum=0.9,
         weight_decay=args.weight_decay,
         nesterov=True,
+    )
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        optimizer, milestones=[150, 226], gamma=0.1
     )
     logging.info(
         f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
@@ -169,6 +172,8 @@ def train_model(args):
                 torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
+
+        scheduler.step()
 
     logging.info("===========================")
     logging.info(f"Best total accuracy {best_accuracy} on epoch {best_epoch}")

@@ -2,6 +2,15 @@ from torch import nn
 from torch.nn.modules.dropout import Dropout
 
 
+def piczak_factory(model_type: str, in_features):
+    if model_type == "regular":
+        return piczak_model(in_features)
+    elif model_type == "batch_norm":
+        return piczak_batchnorm_model(in_features)
+    else:
+        raise ValueError(f"Invalid model type: {model_type}")
+
+
 # https://www.karolpiczak.com/papers/Piczak2015-ESC-ConvNet.pdf
 def piczak_model(in_features):
     return nn.Sequential(
@@ -46,15 +55,6 @@ def piczak_batchnorm_model(in_features):
         nn.Dropout(0.5),
         nn.Linear(5000, 50),
     )
-
-
-def pitzak_factory(model_type: str, in_features):
-    if model_type == "regular":
-        return piczak_model(in_features)
-    elif model_type == "batch_norm":
-        return piczak_batchnorm_model(in_features)
-    else:
-        raise ValueError(f"Invalid model type: {model_type}")
 
 
 class SwapAxes(nn.Module):
