@@ -109,16 +109,12 @@ class AudioDataset(TorchDataset):
         if self.log_mel:
             # https://librosa.org/doc/latest/generated/librosa.feature.melspectrogram.html
             log_mel_spectrogram = self.log_mel_spectrogram(audio, self.arguments)  # .T
-            # Normalize - min max norm
-            log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
             # adding a dimension to be able to stack several feature channels - input to CNN
             log_mel_spectrogram = np.expand_dims(log_mel_spectrogram, axis=0)
             features.append(log_mel_spectrogram)
         if self.delta_log_mel:
             # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
             log_mel_spectrogram = self.log_mel_spectrogram(audio, self.arguments)
-            # Normalize - min max norm
-            log_mel_spectrogram = self.min_max_normalize(log_mel_spectrogram)
             # Compute delta log mel spectrogram
             delta_log_mel_spectrogram = librosa.feature.delta(
                 log_mel_spectrogram, axis=0
@@ -131,9 +127,6 @@ class AudioDataset(TorchDataset):
         if self.mfcc:
             # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
             mel_frequency_coefficients = librosa.feature.mfcc(y=audio, n_mfcc=128).T
-            mel_frequency_coefficients = self.min_max_normalize(
-                mel_frequency_coefficients
-            )
             mel_frequency_coefficients = np.expand_dims(
                 mel_frequency_coefficients, axis=0
             )
@@ -202,6 +195,105 @@ class AudioDataset(TorchDataset):
         return len(self.paths)
 
 
+def padding(sound, pad):
+    # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L7
+    return np.pad(sound, pad, "constant")
+
+
+def multi_crop(sound, input_length, n_crops):
+    # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L58
+    stride = (len(sound) - input_length) // (n_crops - 1)
+    sounds = [sound[stride * i : stride * i + input_length] for i in range(n_crops)]
+    return np.array(sounds)
+
+
+def random_crop(sound, size):
+    org_size = len(sound)
+    start = random.randint(0, org_size - size)
+    return sound[start : start + size]
+
+
+class PiczakBNDataset(TorchDataset):
+    def __init__(self, directory_path, dataset_folds, train, arguments):
+        self.arguments = arguments
+        self.paths = []
+        self.train = train
+
+        for filename in tqdm(natsorted(os.listdir(directory_path))):
+            if int(filename[0]) not in dataset_folds:
+                continue
+            path = os.path.join(directory_path, filename)
+            self.paths.append(path)
+
+    def __getitem__(self, idx):
+        # Prepare audio basics
+        audio = np.load(self.paths[idx])
+        indices = np.nonzero(audio)
+        first_index = indices[0].min()
+        last_index = indices[0].max()
+        audio = audio[first_index : last_index + 1]
+        # Pad audio
+        audio = padding(audio, 20480 // 2)
+        if self.train:
+            # Random crop
+            audio = random_crop(audio, 20480)
+            log_mel = self.log_mel_spectrogram(audio, self.arguments)
+            # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
+            delta_log_mel = librosa.feature.delta(log_mel, axis=0)
+            features = np.concatenate(
+                [
+                    np.expand_dims(log_mel, axis=0),
+                    np.expand_dims(delta_log_mel, axis=0),
+                ],
+                axis=0,
+            ).astype(np.float32)
+        else:
+            # Multi-crop audio
+            crop_features = []
+            audio = multi_crop(audio, 20480, 10)
+            for i in range(10):
+                log_mel = self.log_mel_spectrogram(audio[i], self.arguments)
+                # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
+                delta_log_mel = librosa.feature.delta(log_mel, axis=0)
+                log_delta_join = np.concatenate(
+                    [
+                        np.expand_dims(log_mel, axis=0),
+                        np.expand_dims(delta_log_mel, axis=0),
+                    ],
+                    axis=0,
+                )
+                crop_features.append(log_delta_join)
+                features = np.stack(crop_features, axis=0)
+
+        filename = os.path.split(self.paths[idx])[-1]
+        label = int(filename.split(".")[0].split("-")[-1])
+
+        return (
+            # input
+            features,
+            # target
+            label,
+        )
+
+    def log_mel_spectrogram(self, audio, arguments):
+        # https://librosa.org/doc/latest/generated/librosa.feature.melspectrogram.html
+        spectrogram = librosa.core.stft(
+            audio, n_fft=arguments["n_fft"], hop_length=arguments["hop_length"]
+        )
+        # Convert to mel spectrogram
+        mel_spectrogram = librosa.feature.melspectrogram(
+            S=np.abs(spectrogram) ** 2,
+            n_fft=arguments["n_fft"],
+            hop_length=arguments["hop_length"],
+            n_mels=arguments["num_mels"],
+        )
+        log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
+        return log_mel_spectrogram
+
+    def __len__(self):
+        return len(self.paths)
+
+
 class EnvNetDataset(TorchDataset):
     def __init__(self, dataset_path: str, dataset_folds: List[int], train: bool = True):
         self.train = train
@@ -223,19 +315,15 @@ class EnvNetDataset(TorchDataset):
         last_index = indices[0].max()
         audio = audio[first_index : last_index + 1]
         # Pad audio
-        audio = self.padding(audio, 66650 // 2)
+        audio = padding(audio, 20480 // 2)
         if self.train:
             # Random crop
-            audio = self.random_crop(audio, 66650)
-            # Normalize audio
-            # audio = self.normalize(audio, 32768.0)
+            audio = random_crop(audio, 20480)
             # Prepare audio
             audio = torch.from_numpy(audio).unsqueeze(0).unsqueeze(0)
         else:
-            # Normalize audio
-            # audio = self.normalize(audio, 32768.0)
             # Multi-crop audio
-            audio = self.multi_crop(audio, 66650, 10)
+            audio = multi_crop(audio, 20480, 10)
             # Prepare audio
             audio = torch.from_numpy(audio).unsqueeze(1).unsqueeze(1)
 
@@ -243,26 +331,3 @@ class EnvNetDataset(TorchDataset):
         label = int(filename.split(".")[0].split("-")[-1])
 
         return audio, label
-
-    @staticmethod
-    def padding(sound, pad):
-        # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L7
-        return np.pad(sound, pad, "constant")
-
-    @staticmethod
-    def normalize(sound, factor):
-        # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L23
-        return sound / factor
-
-    @staticmethod
-    def multi_crop(sound, input_length, n_crops):
-        # https://github.com/mil-tokyo/bc_learning_sound/blob/master/utils.py#L58
-        stride = (len(sound) - input_length) // (n_crops - 1)
-        sounds = [sound[stride * i : stride * i + input_length] for i in range(n_crops)]
-        return np.array(sounds)
-
-    @staticmethod
-    def random_crop(sound, size):
-        org_size = len(sound)
-        start = random.randint(0, org_size - size)
-        return sound[start : start + size]
