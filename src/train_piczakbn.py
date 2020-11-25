@@ -29,11 +29,14 @@ def train_model(args):
         "num_mels": args.n_mels,
     }
     # Prepare datasets
+    folds = args.folds.split(",")
+    # First four are train
     train_dataset = PiczakBNDataset(
-        args.dataset_path, [1, 2, 3, 4], train=True, arguments=arguments
+        args.dataset_path, folds[:4], train=True, arguments=arguments
     )
+    # Last one is val
     val_dataset = PiczakBNDataset(
-        args.dataset_path, [5], train=False, arguments=arguments
+        args.dataset_path, folds[4:], train=False, arguments=arguments
     )
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
@@ -139,19 +142,20 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train EnvNet on holdout.")
+    parser = argparse.ArgumentParser(description="Train LogMel-CNN on holdout.")
     parser.add_argument("--batch_size", default=64, type=int)
-    parser.add_argument("--learning_rate", default=0.002, type=float)
-    parser.add_argument("--weight_decay", default=0.001, type=float)
+    parser.add_argument("--learning_rate", default=0.01, type=float)
+    parser.add_argument("--weight_decay", default=0.0005, type=float)
     parser.add_argument("--epochs", default=300, type=int)
     parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--dataset_path", default="data_50", type=str)
     parser.add_argument("--log_filepath", type=str, default=None)
-    parser.add_argument("--warmup_steps", type=int, default=20)
+    parser.add_argument("--warmup_steps", type=int, default=0)
     parser.add_argument("--log_mel", action="store_true")
     parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--n_mels", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
+    parser.add_argument("--folds", default="1,2,3,4,5", type=str)
     args = parser.parse_args()
     train_model(args)

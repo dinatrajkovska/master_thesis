@@ -220,7 +220,7 @@ class PiczakBNDataset(TorchDataset):
         self.train = train
 
         for filename in tqdm(natsorted(os.listdir(directory_path))):
-            if int(filename[0]) not in dataset_folds:
+            if filename[0] not in dataset_folds:
                 continue
             path = os.path.join(directory_path, filename)
             self.paths.append(path)

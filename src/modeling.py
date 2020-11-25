@@ -269,30 +269,9 @@ def get_seq_model(in_features):
     )
 
 
-class StupidModel(nn.Module):
-    def __init__(self, in_features):
-        super(StupidModel, self).__init__()
-        self.flat = nn.Flatten()
-        self.leaky_relu = nn.LeakyReLU()
-        self.fc1 = nn.Linear(128 * 431 * in_features, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, 50)
-        self.softmax = nn.LogSoftmax(dim=-1)
-
-    def forward(self, x):
-        out = self.flat(x)
-        out = self.fc1(out)
-        out = self.leaky_relu(out)
-        out = self.fc2(out)
-        out = self.leaky_relu(out)
-        out = self.fc3(out)
-        out = self.softmax(out)
-        return out
 
 
 # Class-based model
-
-
 class MainBlock(nn.Module):
     def __init__(
         self, in_channels, out_channels, kernel_size, padding, pool_size, maxpool_pad
