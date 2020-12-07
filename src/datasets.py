@@ -1,6 +1,6 @@
 import os
 import random
-from typing import List
+from typing import List, Dict, Any
 
 import librosa
 import numpy as np
@@ -214,7 +214,13 @@ def random_crop(sound, size):
 
 
 class PiczakBNDataset(TorchDataset):
-    def __init__(self, directory_path, dataset_folds, train, arguments):
+    def __init__(
+        self,
+        directory_path: str,
+        dataset_folds: List[str],
+        train: bool,
+        arguments: Dict[str, Any],
+    ):
         self.arguments = arguments
         self.paths = []
         self.train = train
@@ -234,36 +240,63 @@ class PiczakBNDataset(TorchDataset):
         audio = audio[first_index : last_index + 1]
         # Pad audio
         audio = padding(audio, 20480 // 2)
+        features = []
         if self.train:
             # Random crop
             audio = random_crop(audio, 20480)
-            log_mel = self.log_mel_spectrogram(audio, self.arguments)
-            # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
-            delta_log_mel = librosa.feature.delta(log_mel, axis=0)
+            if self.arguments["log_mel"]:
+                features.append(self.log_mel_spectrogram(audio, self.arguments))
+            if self.arguments["delta_log_mel"]:
+                assert self.arguments["log_mel"]
+                # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
+                # features[0] contains the log mel spectogram
+                features.append(librosa.feature.delta(features[0], axis=0))
+            if self.arguments["mfcc"]:
+                features.append(
+                    librosa.feature.mfcc(audio, n_mfcc=self.arguments["n_features"])
+                )
+            if self.arguments["chroma_stft"]:
+                features.append(
+                    librosa.feature.chroma_stft(
+                        audio, n_chroma=self.arguments["n_features"]
+                    )
+                )
             features = np.concatenate(
-                [
-                    np.expand_dims(log_mel, axis=0),
-                    np.expand_dims(delta_log_mel, axis=0),
-                ],
-                axis=0,
+                [np.expand_dims(feature, axis=0) for feature in features], axis=0
             ).astype(np.float32)
         else:
             # Multi-crop audio
-            crop_features = []
             audio = multi_crop(audio, 20480, 10)
             for i in range(10):
-                log_mel = self.log_mel_spectrogram(audio[i], self.arguments)
-                # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
-                delta_log_mel = librosa.feature.delta(log_mel, axis=0)
-                log_delta_join = np.concatenate(
-                    [
-                        np.expand_dims(log_mel, axis=0),
-                        np.expand_dims(delta_log_mel, axis=0),
-                    ],
+                crop_features = []
+                if self.arguments["log_mel"]:
+                    crop_features.append(
+                        self.log_mel_spectrogram(audio[i], self.arguments)
+                    )
+                if self.arguments["delta_log_mel"]:
+                    assert self.arguments["log_mel"]
+                    # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
+                    crop_features.append(
+                        librosa.feature.delta(crop_features[0], axis=0)
+                    )
+                if self.arguments["mfcc"]:
+                    crop_features.append(
+                        librosa.feature.mfcc(
+                            audio[i], n_mfcc=self.arguments["n_features"]
+                        )
+                    )
+                if self.arguments["chroma_stft"]:
+                    crop_features.append(
+                        librosa.feature.chroma_stft(
+                            audio[i], n_chroma=self.arguments["n_features"]
+                        )
+                    )
+                crop_features = np.concatenate(
+                    [np.expand_dims(feature, axis=0) for feature in crop_features],
                     axis=0,
                 )
-                crop_features.append(log_delta_join)
-                features = np.stack(crop_features, axis=0)
+                features.append(crop_features)
+            features = np.stack(features, axis=0)
 
         filename = os.path.split(self.paths[idx])[-1]
         label = int(filename.split(".")[0].split("-")[-1])
@@ -285,7 +318,7 @@ class PiczakBNDataset(TorchDataset):
             S=np.abs(spectrogram) ** 2,
             n_fft=arguments["n_fft"],
             hop_length=arguments["hop_length"],
-            n_mels=arguments["num_mels"],
+            n_mels=arguments["n_features"],
         )
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
         return log_mel_spectrogram

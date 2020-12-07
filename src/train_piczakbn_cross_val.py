@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch import nn
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from datasets import PiczakBNDataset, target2name
@@ -26,9 +26,12 @@ def train_model(args):
     arguments = {
         "n_fft": args.dft_window_size,
         "hop_length": args.hop_length,
-        "num_mels": args.n_mels,
+        "n_features": args.n_features,
+        "log_mel": args.log_mel,
+        "delta_log_mel": args.delta_log_mel,
+        "mfcc": args.mfcc,
+        "chroma_stft": args.chroma_stft,
     }
-
     data_splits = [
         (["1", "2", "3", "4"], ["5"]),
         (["1", "2", "3", "5"], ["4"]),
@@ -42,18 +45,18 @@ def train_model(args):
         train_dataset = PiczakBNDataset(
             args.dataset_path, split[0], train=True, arguments=arguments
         )
-        # train_dataset = Subset(train_dataset, list(range(10)))
         val_dataset = PiczakBNDataset(
             args.dataset_path, split[1], train=False, arguments=arguments
         )
-        # val_dataset = Subset(val_dataset, list(range(10)))
         # iterator over object
         train_loader = DataLoader(
             train_dataset, batch_size=args.batch_size, shuffle=True
         )
         val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
 
-        in_features = np.sum([args.log_mel, args.delta_log_mel])
+        in_features = np.sum(
+            [args.log_mel, args.delta_log_mel, args.mfcc, args.chroma_stft]
+        )
         model = piczak_batchnorm_model(in_features=in_features).to(device)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(
@@ -163,6 +166,8 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_steps", type=int, default=0)
     parser.add_argument("--log_mel", action="store_true")
     parser.add_argument("--delta_log_mel", action="store_true")
+    parser.add_argument("--mfcc", action="store_true")
+    parser.add_argument("--chroma_stft", action="store_true")
     parser.add_argument("--n_mels", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)

@@ -26,7 +26,11 @@ def train_model(args):
     arguments = {
         "n_fft": args.dft_window_size,
         "hop_length": args.hop_length,
-        "num_mels": args.n_mels,
+        "n_features": args.n_features,
+        "log_mel": args.log_mel,
+        "delta_log_mel": args.delta_log_mel,
+        "mfcc": args.mfcc,
+        "chroma_stft": args.chroma_stft,
     }
     # Prepare datasets
     folds = args.folds.split(",")
@@ -41,7 +45,9 @@ def train_model(args):
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
-    in_features = np.sum([args.log_mel, args.delta_log_mel])
+    in_features = np.sum(
+        [args.log_mel, args.delta_log_mel, args.mfcc, args.chroma_stft]
+    )
     model = piczak_batchnorm_model(in_features=in_features).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
@@ -153,7 +159,9 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_steps", type=int, default=0)
     parser.add_argument("--log_mel", action="store_true")
     parser.add_argument("--delta_log_mel", action="store_true")
-    parser.add_argument("--n_mels", default=60, type=int)
+    parser.add_argument("--mfcc", action="store_true")
+    parser.add_argument("--chroma_stft", action="store_true")
+    parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--folds", default="1,2,3,4,5", type=str)
