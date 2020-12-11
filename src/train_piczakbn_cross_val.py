@@ -168,7 +168,7 @@ if __name__ == "__main__":
     parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--chroma_stft", action="store_true")
-    parser.add_argument("--n_mels", default=60, type=int)
+    parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
