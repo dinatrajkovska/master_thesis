@@ -214,6 +214,13 @@ def random_crop(sound, size):
     return sound[start : start + size]
 
 
+def z_score_normalize(features: np.ndarray):
+    # https://www.kaggle.com/c/freesound-audio-tagging/discussion/54082
+    # https://stackoverflow.com/questions/54432486/normalizing-mel-spectrogram-to-unit-peak-amplitude
+    mean, std = features.mean(-1)[:, np.newaxis], features.std(-1)[:, np.newaxis]
+    return (features - mean) / (std + 1e-15)
+
+
 class PiczakBNDataset(TorchDataset):
     def __init__(
         self,
@@ -225,7 +232,6 @@ class PiczakBNDataset(TorchDataset):
         self.arguments = arguments
         self.paths = []
         self.train = train
-
         for filename in tqdm(natsorted(os.listdir(directory_path))):
             if filename[0] not in dataset_folds:
                 continue
@@ -248,16 +254,16 @@ class PiczakBNDataset(TorchDataset):
             log_mel = None
             if self.arguments["log_mel"]:
                 log_mel = self.log_mel_spectrogram(audio, self.arguments)
-                features.append(log_mel)
+                features.append(z_score_normalize(log_mel))
             if self.arguments["delta_log_mel"]:
                 assert self.arguments["log_mel"]
                 # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
                 # features[0] contains the log mel spectogram
-                features.append(librosa.feature.delta(log_mel, axis=0))
+                delta_log_mel = librosa.feature.delta(log_mel, axis=0)
+                features.append(z_score_normalize(delta_log_mel))
             if self.arguments["mfcc"]:
-                features.append(
-                    librosa.feature.mfcc(audio, n_mfcc=self.arguments["n_features"])
-                )
+                mfcc = librosa.feature.mfcc(audio, n_mfcc=self.arguments["n_features"])
+                features.append(z_score_normalize(mfcc))
             if self.arguments["chroma_stft"]:
                 features.append(
                     librosa.feature.chroma_stft(
@@ -275,17 +281,17 @@ class PiczakBNDataset(TorchDataset):
                 log_mel = None
                 if self.arguments["log_mel"]:
                     log_mel = self.log_mel_spectrogram(audio[i], self.arguments)
-                    crop_features.append(log_mel)
+                    crop_features.append(z_score_normalize(log_mel))
                 if self.arguments["delta_log_mel"]:
                     assert self.arguments["log_mel"]
                     # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
-                    crop_features.append(librosa.feature.delta(log_mel, axis=0))
+                    delta_log_mel = librosa.feature.delta(log_mel, axis=0)
+                    crop_features.append(z_score_normalize(delta_log_mel))
                 if self.arguments["mfcc"]:
-                    crop_features.append(
-                        librosa.feature.mfcc(
-                            audio[i], n_mfcc=self.arguments["n_features"]
-                        )
+                    mfcc = librosa.feature.mfcc(
+                        audio[i], n_mfcc=self.arguments["n_features"]
                     )
+                    crop_features.append(z_score_normalize(mfcc))
                 if self.arguments["chroma_stft"]:
                     crop_features.append(
                         librosa.feature.chroma_stft(
