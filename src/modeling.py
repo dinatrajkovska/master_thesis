@@ -1,25 +1,29 @@
 from torch import nn
-from torch.nn.modules.dropout import Dropout
 
 
-def piczak_factory(model_type: str, in_features):
+def model_factory(model_type: str, n_feature_types: int):
     if model_type == "regular":
-        return piczak_model(in_features)
+        return piczak_model(n_feature_types)
     elif model_type == "batch_norm":
-        return piczak_batchnorm_model(in_features)
+        return piczak_batchnorm_model(n_feature_types)
+    elif model_type == "dcnn":
+        return dcnn_model(n_feature_types)
     else:
         raise ValueError(f"Invalid model type: {model_type}")
 
 
 # https://www.karolpiczak.com/papers/Piczak2015-ESC-ConvNet.pdf
-def piczak_model(in_features):
+def piczak_model(n_feature_types):
     return nn.Sequential(
         nn.Conv2d(
-            in_channels=in_features, out_channels=80, kernel_size=(57, 6), stride=(1, 1)
+            in_channels=n_feature_types,
+            out_channels=80,
+            kernel_size=(57, 6),
+            stride=(1, 1),
         ),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
-        nn.Dropout(0.5),
+        nn.Dropout(0.5),  # Have a look at this dropout again
         nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(1, 3), stride=(1, 1)),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
@@ -34,10 +38,13 @@ def piczak_model(in_features):
     )
 
 
-def piczak_batchnorm_model(in_features):
+def piczak_batchnorm_model(n_feature_types: int):
     return nn.Sequential(
         nn.Conv2d(
-            in_channels=in_features, out_channels=80, kernel_size=(57, 6), stride=(1, 1)
+            in_channels=n_feature_types,
+            out_channels=80,
+            kernel_size=(57, 6),
+            stride=(1, 1),
         ),
         nn.BatchNorm2d(num_features=80),
         nn.LeakyReLU(),
@@ -120,11 +127,12 @@ def envnet_v2():
     )
 
 
-def get_seq_model(in_features):
+def dcnn_model(n_feature_types):
+    # Environment Sound Classification using Multiple Feature Channels and Deep Convolutional Neural Networks
     return nn.Sequential(
         # Block 1
         nn.Conv2d(
-            in_channels=in_features,
+            in_channels=n_feature_types,
             out_channels=32,
             kernel_size=(1, 3),
             stride=1,
@@ -261,14 +269,11 @@ def get_seq_model(in_features):
         nn.BatchNorm2d(num_features=256),
         nn.MaxPool2d(kernel_size=(4, 2), padding=(1, 0)),
         nn.Flatten(),
-        nn.Linear(4096, 512),
+        nn.Linear(512, 512),
         nn.LeakyReLU(),
         nn.Dropout(0.5),
         nn.Linear(512, 50),
-        nn.LogSoftmax(dim=-1),
     )
-
-
 
 
 # Class-based model

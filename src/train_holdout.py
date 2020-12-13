@@ -2,14 +2,14 @@ import numpy as np
 import torch
 from torch import nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
 import logging
 from typing import Dict
 
 from datasets import AudioDataset, target2name
-from modeling import piczak_factory
+from modeling import model_factory
 
 
 def major_vote(mini_batch: torch.Tensor) -> int:
@@ -87,7 +87,7 @@ def train_model(args):
         [args.log_mel, args.delta_log_mel, args.mfcc, args.gfcc, args.cqt, args.chroma]
     )
     assert in_features > 0
-    model = piczak_factory(args.model_type, in_features).to(device)
+    model = model_factory(args.model_type, in_features).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(),
@@ -205,4 +205,3 @@ if __name__ == "__main__":
     parser.add_argument("--sampling_rate", type=int, default=None)
     args = parser.parse_args()
     train_model(args)
-

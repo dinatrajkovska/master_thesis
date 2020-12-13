@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from datasets import PiczakBNDataset, target2name
-from modeling import piczak_batchnorm_model
+from modeling import model_factory
 from schedule import get_linear_schedule_with_warmup
 
 
@@ -40,15 +40,17 @@ def train_model(args):
     )
     # Last one is val
     val_dataset = PiczakBNDataset(
-        args.dataset_path, folds[4:], train=False, arguments=arguments
+        args.dataset_path, folds[:4], train=False, arguments=arguments
     )
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
-    in_features = np.sum(
+    n_feature_types = np.sum(
         [args.log_mel, args.delta_log_mel, args.mfcc, args.chroma_stft]
     )
-    model = piczak_batchnorm_model(in_features=in_features).to(device)
+    model = model_factory(
+        model_type=args.model_type, n_feature_types=n_feature_types
+    ).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(),
@@ -79,6 +81,9 @@ def train_model(args):
                 loss = criterion(probs, target)
                 # backward
                 loss.backward()
+                # clip the gradients
+                if args.clip_val:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip_val)
                 # update weights
                 optimizer.step()
                 # Update progress bar
@@ -97,7 +102,9 @@ def train_model(args):
                 audio, target = audio.to(device), target.to(device)
                 # Obtain dimensions
                 val_batch_size = audio.size()[0]
-                audio = audio.view(val_batch_size * 10, in_features, 60, 41)
+                audio = audio.view(
+                    val_batch_size * 10, n_feature_types, args.n_features, 41
+                )
                 # Obtain predictions: [Val-BS * 10, Num-classes]
                 probs = model(audio)
                 num_classes = probs.size()[-1]
@@ -136,7 +143,7 @@ def train_model(args):
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
-                torch.save(model.state_dict(), args.save_model_path)
+                # torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
@@ -162,6 +169,8 @@ if __name__ == "__main__":
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--chroma_stft", action="store_true")
     parser.add_argument("--n_features", default=60, type=int)
+    parser.add_argument("--clip_val", default=None, type=float)
+    parser.add_argument("--model_type", default="batch_norm", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--folds", default="1,2,3,4,5", type=str)
