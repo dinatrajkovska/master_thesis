@@ -23,7 +23,7 @@ def piczak_model(n_feature_types):
         ),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
-        nn.Dropout(0.5),  # Have a look at this dropout again
+        # nn.Dropout(0.5), Have a look at this dropout again
         nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(1, 3), stride=(1, 1)),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),

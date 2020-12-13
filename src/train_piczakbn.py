@@ -40,7 +40,7 @@ def train_model(args):
     )
     # Last one is val
     val_dataset = PiczakBNDataset(
-        args.dataset_path, folds[:4], train=False, arguments=arguments
+        args.dataset_path, folds[4:], train=False, arguments=arguments
     )
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
