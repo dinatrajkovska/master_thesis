@@ -262,14 +262,22 @@ class PiczakBNDataset(TorchDataset):
                 delta_log_mel = librosa.feature.delta(log_mel, axis=0)
                 features.append(z_score_normalize(delta_log_mel))
             if self.arguments["mfcc"]:
+                # https://arxiv.org/abs/1706.07156 (MFCC only results on ESC-50)
                 mfcc = librosa.feature.mfcc(audio, n_mfcc=self.arguments["n_features"])
                 features.append(z_score_normalize(mfcc))
             if self.arguments["chroma_stft"]:
-                features.append(
-                    librosa.feature.chroma_stft(
-                        audio, n_chroma=self.arguments["n_features"]
-                    )
+                chroma_stft = librosa.feature.chroma_stft(
+                    audio, n_chroma=self.arguments["n_features"], norm=None
                 )
+                features.append(z_score_normalize(chroma_stft))
+            if self.arguments["chroma_cqt"]:
+                chroma_cqt = librosa.feature.chroma_cqt(
+                    audio,
+                    bins_per_octave=self.arguments["n_features"],
+                    n_chroma=self.arguments["n_features"],
+                    norm=None,
+                )
+                features.append(z_score_normalize(chroma_cqt))
             features = np.concatenate(
                 [np.expand_dims(feature, axis=0) for feature in features], axis=0
             ).astype(np.float32)
@@ -288,16 +296,24 @@ class PiczakBNDataset(TorchDataset):
                     delta_log_mel = librosa.feature.delta(log_mel, axis=0)
                     crop_features.append(z_score_normalize(delta_log_mel))
                 if self.arguments["mfcc"]:
+                    # https://arxiv.org/abs/1706.07156 (MFCC only results on ESC-50)
                     mfcc = librosa.feature.mfcc(
                         audio[i], n_mfcc=self.arguments["n_features"]
                     )
                     crop_features.append(z_score_normalize(mfcc))
                 if self.arguments["chroma_stft"]:
-                    crop_features.append(
-                        librosa.feature.chroma_stft(
-                            audio[i], n_chroma=self.arguments["n_features"]
-                        )
+                    chroma_stft = librosa.feature.chroma_stft(
+                        audio[i], n_chroma=self.arguments["n_features"], norm=None
                     )
+                    crop_features.append(z_score_normalize(chroma_stft))
+                if self.arguments["chroma_cqt"]:
+                    chroma_cqt = librosa.feature.chroma_cqt(
+                        audio[i],
+                        bins_per_octave=self.arguments["n_features"],
+                        n_chroma=self.arguments["n_features"],
+                        norm=None,
+                    )
+                    crop_features.append(z_score_normalize(chroma_cqt))
                 crop_features = np.concatenate(
                     [np.expand_dims(feature, axis=0) for feature in crop_features],
                     axis=0,

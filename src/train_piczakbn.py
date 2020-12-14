@@ -31,6 +31,7 @@ def train_model(args):
         "delta_log_mel": args.delta_log_mel,
         "mfcc": args.mfcc,
         "chroma_stft": args.chroma_stft,
+        "chroma_cqt": args.chroma_cqt,
     }
     # Prepare datasets
     folds = args.folds.split(",")
@@ -46,7 +47,7 @@ def train_model(args):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
     n_feature_types = np.sum(
-        [args.log_mel, args.delta_log_mel, args.mfcc, args.chroma_stft]
+        [args.log_mel, args.delta_log_mel, args.mfcc, args.chroma_stft, args.chroma_cqt]
     )
     model = model_factory(
         model_type=args.model_type, n_feature_types=n_feature_types
@@ -168,6 +169,7 @@ if __name__ == "__main__":
     parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--chroma_stft", action="store_true")
+    parser.add_argument("--chroma_cqt", action="store_true")
     parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--clip_val", default=None, type=float)
     parser.add_argument("--model_type", default="batch_norm", type=str)

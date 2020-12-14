@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from datasets import PiczakBNDataset, target2name
-from modeling import piczak_batchnorm_model
+from modeling import model_factory
 from schedule import get_linear_schedule_with_warmup
 
 
@@ -31,6 +31,7 @@ def train_model(args):
         "delta_log_mel": args.delta_log_mel,
         "mfcc": args.mfcc,
         "chroma_stft": args.chroma_stft,
+        "chroma_cqt": args.chroma_cqt,
     }
     data_splits = [
         (["1", "2", "3", "4"], ["5"]),
@@ -42,22 +43,32 @@ def train_model(args):
     results = []
     for split_num, split in enumerate(data_splits):
         logging.info(f"----------- Starting split number {split_num + 1} -----------")
+        # Construct datasets
         train_dataset = PiczakBNDataset(
             args.dataset_path, split[0], train=True, arguments=arguments
         )
         val_dataset = PiczakBNDataset(
             args.dataset_path, split[1], train=False, arguments=arguments
         )
-        # iterator over object
+        # Construct loaders
         train_loader = DataLoader(
             train_dataset, batch_size=args.batch_size, shuffle=True
         )
         val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
-
-        in_features = np.sum(
-            [args.log_mel, args.delta_log_mel, args.mfcc, args.chroma_stft]
+        # Obtain features
+        n_feature_types = np.sum(
+            [
+                args.log_mel,
+                args.delta_log_mel,
+                args.mfcc,
+                args.chroma_stft,
+                args.chroma_cqt,
+            ]
         )
-        model = piczak_batchnorm_model(in_features=in_features).to(device)
+        # Create model, loss, optimizer, scheduler
+        model = model_factory(
+            model_type=args.model_type, n_feature_types=n_feature_types
+        ).to(device)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(
             model.parameters(),
@@ -74,8 +85,8 @@ def train_model(args):
         logging.info(
             f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
         )
+        # Start training
         for epoch in tqdm(range(args.epochs)):
-            logging.info(f"Starting epoch {epoch + 1}...")
             # Set model in train mode
             model.train(True)
             for audio, target in train_loader:
@@ -87,6 +98,9 @@ def train_model(args):
                 loss = criterion(probs, target)
                 # backward
                 loss.backward()
+                # clip the gradients
+                if args.clip_val:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip_val)
                 # update weights
                 optimizer.step()
 
@@ -103,7 +117,9 @@ def train_model(args):
                 audio, target = audio.to(device), target.to(device)
                 # Obtain dimensions
                 val_batch_size = audio.size()[0]
-                audio = audio.view(val_batch_size * 10, in_features, 60, 41)
+                audio = audio.view(
+                    val_batch_size * 10, n_feature_types, args.n_features, 41
+                )
                 # Obtain predictions: [Val-BS * 10, Num-classes]
                 probs = model(audio)
                 num_classes = probs.size()[-1]
@@ -168,9 +184,12 @@ if __name__ == "__main__":
     parser.add_argument("--delta_log_mel", action="store_true")
     parser.add_argument("--mfcc", action="store_true")
     parser.add_argument("--chroma_stft", action="store_true")
+    parser.add_argument("--chroma_cqt", action="store_true")
     parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
+    parser.add_argument("--model_type", default="batch_norm", type=str)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
+    parser.add_argument("--clip_val", default=None, type=float)
     args = parser.parse_args()
     train_model(args)
