@@ -36,12 +36,17 @@ def train_model(args):
     # Prepare datasets
     folds = args.folds.split(",")
     # First four are train
+    logging.warning(f"Using augmentations: {args.augmentations}")
     train_dataset = PiczakBNDataset(
-        args.dataset_path, folds[:4], train=True, arguments=arguments
+        args.dataset_path,
+        folds[:4],
+        train=True,
+        arguments=arguments,
+        augmentations=args.augmentations.split(","),
     )
     # Last one is val
     val_dataset = PiczakBNDataset(
-        args.dataset_path, folds[4:], train=False, arguments=arguments
+        args.dataset_path, folds[4:], train=False, arguments=arguments, augmentations=[]
     )
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
@@ -176,5 +181,11 @@ if __name__ == "__main__":
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--folds", default="1,2,3,4,5", type=str)
+    parser.add_argument(
+        "--augmentations",
+        default="",
+        type=str,
+        help="Comma-separated augmentations: pitch_shift, gaussian_noise",
+    )
     args = parser.parse_args()
     train_model(args)

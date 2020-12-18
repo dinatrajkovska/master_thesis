@@ -41,14 +41,23 @@ def train_model(args):
         (["2", "3", "4", "5"], ["1"]),
     ]
     results = []
+    logging.warning(f"Using augmentations: {args.augmentations}")
     for split_num, split in enumerate(data_splits):
         logging.info(f"----------- Starting split number {split_num + 1} -----------")
         # Construct datasets
         train_dataset = PiczakBNDataset(
-            args.dataset_path, split[0], train=True, arguments=arguments
+            args.dataset_path,
+            split[0],
+            train=True,
+            arguments=arguments,
+            augmentations=args.augmentations.split(","),
         )
         val_dataset = PiczakBNDataset(
-            args.dataset_path, split[1], train=False, arguments=arguments
+            args.dataset_path,
+            split[1],
+            train=False,
+            arguments=arguments,
+            augmentations=[],
         )
         # Construct loaders
         train_loader = DataLoader(
@@ -191,5 +200,11 @@ if __name__ == "__main__":
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
     parser.add_argument("--clip_val", default=None, type=float)
+    parser.add_argument(
+        "--augmentations",
+        default="",
+        type=str,
+        help="Comma-separated augmentations: pitch_shift, gaussian_noise",
+    )
     args = parser.parse_args()
     train_model(args)

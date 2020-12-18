@@ -8,8 +8,16 @@ import torch
 from natsort import natsorted
 from torch.utils.data import Dataset as TorchDataset
 from tqdm import tqdm
+from audiomentations import Compose, AddGaussianNoise, PitchShift
+
 
 # https://github.com/karolpiczak/ESC-50
+
+
+name2augmentation = {
+    "gaussian_noise": AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=0.5),
+    "pitch_shift": PitchShift(min_semitones=-4, max_semitones=4, p=0.5),
+}
 
 
 target2name = {
@@ -217,7 +225,7 @@ def random_crop(sound, size):
 def z_score_normalize(features: np.ndarray):
     # https://www.kaggle.com/c/freesound-audio-tagging/discussion/54082
     # https://stackoverflow.com/questions/54432486/normalizing-mel-spectrogram-to-unit-peak-amplitude
-    mean, std = features.mean(-1)[:, np.newaxis], features.std(-1)[:, np.newaxis]
+    mean, std = features.mean(-1, keepdims=True), features.std(-1, keepdims=True)
     return (features - mean) / (std + 1e-15)
 
 
@@ -228,6 +236,7 @@ class PiczakBNDataset(TorchDataset):
         dataset_folds: List[str],
         train: bool,
         arguments: Dict[str, Any],
+        augmentations: List[str],
     ):
         self.arguments = arguments
         self.paths = []
@@ -237,6 +246,13 @@ class PiczakBNDataset(TorchDataset):
                 continue
             path = os.path.join(directory_path, filename)
             self.paths.append(path)
+        self.augmentations = Compose(
+            [
+                name2augmentation[name]
+                for name in augmentations
+                if name in name2augmentation.keys()
+            ]
+        )
 
     def __getitem__(self, idx):
         # Prepare audio basics
@@ -251,6 +267,8 @@ class PiczakBNDataset(TorchDataset):
         if self.train:
             # Random crop
             audio = random_crop(audio, 20480)
+            # Augment audio
+            audio = self.augmentations(audio, sample_rate=22050)
             log_mel = None
             if self.arguments["log_mel"]:
                 log_mel = self.log_mel_spectrogram(audio, self.arguments)
@@ -258,7 +276,6 @@ class PiczakBNDataset(TorchDataset):
             if self.arguments["delta_log_mel"]:
                 assert self.arguments["log_mel"]
                 # https://librosa.org/doc/latest/generated/librosa.feature.delta.html
-                # features[0] contains the log mel spectogram
                 delta_log_mel = librosa.feature.delta(log_mel, axis=0)
                 features.append(z_score_normalize(delta_log_mel))
             if self.arguments["mfcc"]:
