@@ -50,19 +50,8 @@ def train_model(args):
         args.dataset_path, folds[4:], train=False, arguments=arguments, augmentations=[]
     )
     # Prepare dataloaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=args.num_workers,
-        pin_memory=True if args.num_workers else False,
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=args.batch_size // 10,
-        num_workers=args.num_workers,
-        pin_memory=True if args.num_workers else False,
-    )
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
     n_feature_types = np.sum(
         [
             args.log_mel,
@@ -165,7 +154,6 @@ def train_model(args):
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
-                torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
@@ -182,7 +170,6 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", default=0.01, type=float)
     parser.add_argument("--weight_decay", default=0.0005, type=float)
     parser.add_argument("--epochs", default=300, type=int)
-    parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--dataset_path", default="data_50", type=str)
     parser.add_argument("--log_filepath", type=str, default=None)
     parser.add_argument("--warmup_steps", type=int, default=0)
@@ -197,7 +184,6 @@ if __name__ == "__main__":
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--folds", default="1,2,3,4,5", type=str)
-    parser.add_argument("--num_workers", type=int, default=0)
     parser.add_argument(
         "--augmentations",
         default="",

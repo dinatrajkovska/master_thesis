@@ -62,18 +62,9 @@ def train_model(args):
         )
         # Construct loaders
         train_loader = DataLoader(
-            train_dataset,
-            batch_size=args.batch_size,
-            shuffle=True,
-            num_workers=args.num_workers,
-            pin_memory=True if args.num_workers else False,
+            train_dataset, batch_size=args.batch_size, shuffle=True
         )
-        val_loader = DataLoader(
-            val_dataset,
-            batch_size=args.batch_size // 10,
-            num_workers=args.num_workers,
-            pin_memory=True if args.num_workers else False,
-        )
+        val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
         # Obtain features
         n_feature_types = np.sum(
             [
@@ -208,7 +199,6 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", default="batch_norm", type=str)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
-    parser.add_argument("--num_workers", type=int, default=0)
     parser.add_argument(
         "--augmentations",
         default="",

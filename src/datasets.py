@@ -246,7 +246,7 @@ class PiczakBNDataset(TorchDataset):
                     axis=0,
                 )
                 features.append(crop_features)
-            features = np.stack(features, axis=0)
+            features = np.stack(features, axis=0).astype(np.float32)
 
         filename = os.path.split(self.paths[idx])[-1]
         label = int(filename.split(".")[0].split("-")[-1])
