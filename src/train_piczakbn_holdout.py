@@ -186,7 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--folds", default="1,2,3,4,5", type=str)
     parser.add_argument(
         "--augmentations",
-        default="",
+        default="none",
         type=str,
         help="Comma-separated augmentations: pitch_shift,gaussian_noise",
     )

@@ -201,7 +201,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_filepath", type=str, default=None)
     parser.add_argument(
         "--augmentations",
-        default="",
+        default="none",
         type=str,
         help="Comma-separated augmentations: pitch_shift,gaussian_noise",
     )
