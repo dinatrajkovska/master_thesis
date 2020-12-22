@@ -8,8 +8,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from datasets import PiczakBNDataset, target2name
-from modeling import model_factory
+from datasets import EnvNetDataset, target2name
+from modeling import envnet_v2
 from schedule import get_linear_schedule_with_warmup
 
 
@@ -23,17 +23,6 @@ def train_model(args):
         logging.basicConfig(level=logging.INFO)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"-------- Using device {device} --------")
-    arguments = {
-        "n_fft": args.dft_window_size,
-        "hop_length": args.hop_length,
-        "n_features": args.n_features,
-        "log_mel": args.log_mel,
-        "delta_log_mel": args.delta_log_mel,
-        "mfcc": args.mfcc,
-        "gfcc": args.gfcc,
-        "chroma_stft": args.chroma_stft,
-        "cqt": args.cqt,
-    }
     data_splits = [
         (["1", "2", "3", "4"], ["5"]),
         (["1", "2", "3", "5"], ["4"]),
@@ -46,40 +35,22 @@ def train_model(args):
     for split_num, split in enumerate(data_splits):
         logging.info(f"----------- Starting split number {split_num + 1} -----------")
         # Construct datasets
-        train_dataset = PiczakBNDataset(
+        train_dataset = EnvNetDataset(
             args.dataset_path,
             split[0],
             train=True,
-            arguments=arguments,
             augmentations=args.augmentations.split(","),
         )
-        val_dataset = PiczakBNDataset(
-            args.dataset_path,
-            split[1],
-            train=False,
-            arguments=arguments,
-            augmentations=[],
+        val_dataset = EnvNetDataset(
+            args.dataset_path, split[1], train=False, augmentations=[]
         )
         # Construct loaders
         train_loader = DataLoader(
             train_dataset, batch_size=args.batch_size, shuffle=True
         )
         val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
-        # Obtain features
-        n_feature_types = np.sum(
-            [
-                args.log_mel,
-                args.delta_log_mel,
-                args.mfcc,
-                args.gfcc,
-                args.chroma_stft,
-                args.cqt,
-            ]
-        )
         # Create model, loss, optimizer, scheduler
-        model = model_factory(
-            model_type=args.model_type, n_feature_types=n_feature_types
-        ).to(device)
+        model = envnet_v2().to(device)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(
             model.parameters(),
@@ -125,9 +96,8 @@ def train_model(args):
                 audio, target = audio.to(device), target.to(device)
                 # Obtain dimensions
                 val_batch_size = audio.size()[0]
-                audio = audio.view(
-                    val_batch_size * 10, n_feature_types, args.n_features, 41
-                )
+                num_samples = audio.size()[-1]
+                audio = audio.view(val_batch_size * 10, 1, 1, num_samples)
                 # Obtain predictions: [Val-BS * 10, Num-classes]
                 probs = model(audio)
                 num_classes = probs.size()[-1]
@@ -181,23 +151,13 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Cross-val LogMel CNN.")
+    parser = argparse.ArgumentParser(description="Train EnvNet on cross-val.")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--epochs", default=300, type=int)
-    parser.add_argument("--learning_rate", default=0.01, type=float)
-    parser.add_argument("--weight_decay", default=0.0005, type=float)
+    parser.add_argument("--learning_rate", default=0.002, type=float)
+    parser.add_argument("--weight_decay", default=0.001, type=float)
     parser.add_argument("--dataset_path", default="data/data_50_numpy_22050/", type=str)
     parser.add_argument("--warmup_steps", type=int, default=0)
-    parser.add_argument("--log_mel", type=bool, default=False)
-    parser.add_argument("--delta_log_mel", type=bool, default=False)
-    parser.add_argument("--mfcc", type=bool, default=False)
-    parser.add_argument("--gfcc", type=bool, default=False)
-    parser.add_argument("--chroma_stft", type=bool, default=False)
-    parser.add_argument("--cqt", type=bool, default=False)
-    parser.add_argument("--n_features", default=60, type=int)
-    parser.add_argument("--dft_window_size", default=1024, type=int)
-    parser.add_argument("--model_type", default="batch_norm", type=str)
-    parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
     parser.add_argument(
         "--augmentations",

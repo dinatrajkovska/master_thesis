@@ -275,14 +275,28 @@ class PiczakBNDataset(TorchDataset):
 
 
 class EnvNetDataset(TorchDataset):
-    def __init__(self, dataset_path: str, dataset_folds: List[int], train: bool = True):
+    def __init__(
+        self,
+        dataset_path: str,
+        dataset_folds: List[int],
+        train: bool,
+        augmentations: List[str],
+    ):
         self.train = train
         self.paths = []
         for filename in tqdm(natsorted(os.listdir(dataset_path))):
-            if int(filename[0]) not in dataset_folds:
+            if filename[0] not in dataset_folds:
                 continue
             path = os.path.join(dataset_path, filename)
             self.paths.append(path)
+        self.sampling_rate = int(dataset_path.split("_")[-1])
+        self.augmentations = Compose(
+            [
+                name2augmentation[name]
+                for name in augmentations
+                if name in name2augmentation.keys()
+            ]
+        )
 
     def __len__(self) -> int:
         return len(self.paths)
@@ -295,15 +309,17 @@ class EnvNetDataset(TorchDataset):
         last_index = indices[0].max()
         audio = audio[first_index : last_index + 1]
         # Pad audio
-        audio = padding(audio, 20480 // 2)
+        audio = padding(audio, 66650 // 2)
         if self.train:
             # Random crop
-            audio = random_crop(audio, 20480)
+            audio = random_crop(audio, 66650)
+            # Augment audio
+            audio = self.augmentations(audio, sample_rate=self.sampling_rate)
             # Prepare audio
             audio = torch.from_numpy(audio).unsqueeze(0).unsqueeze(0)
         else:
             # Multi-crop audio
-            audio = multi_crop(audio, 20480, 10)
+            audio = multi_crop(audio, 66650, 10)
             # Prepare audio
             audio = torch.from_numpy(audio).unsqueeze(1).unsqueeze(1)
 

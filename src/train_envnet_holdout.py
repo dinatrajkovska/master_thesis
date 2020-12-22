@@ -23,10 +23,11 @@ def train_model(args):
         logging.basicConfig(level=logging.INFO)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"-------- Using device {device} --------")
-
     # Prepare datasets
-    train_dataset = EnvNetDataset(args.dataset_path, [1, 2, 3, 4], train=True)
-    val_dataset = EnvNetDataset(args.dataset_path, [5], train=False)
+    train_dataset = EnvNetDataset(
+        args.dataset_path, ["1", "2", "3", "4"], train=True, augmentations=[]
+    )
+    val_dataset = EnvNetDataset(args.dataset_path, ["5"], train=False, augmentations=[])
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
@@ -119,7 +120,6 @@ def train_model(args):
                         f"{target2name[target]}: {target2correct[target]/target2total[target]}"
                     )
                 logging.info("===========================")
-                torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
 
@@ -136,7 +136,6 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", default=0.002, type=float)
     parser.add_argument("--weight_decay", default=0.001, type=float)
     parser.add_argument("--epochs", default=300, type=int)
-    parser.add_argument("--save_model_path", default="models/best.pt", type=str)
     parser.add_argument("--dataset_path", default="data_50", type=str)
     parser.add_argument("--log_filepath", type=str, default=None)
     parser.add_argument("--warmup_steps", type=int, default=20)
