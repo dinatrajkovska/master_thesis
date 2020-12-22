@@ -1,8 +1,0 @@
-### Example of lines you can add to your ~/.bashrc file to load some globally installed packages you might need.
-### More information can be found in the speech wiki!
-
-# Use locally installed Python packages via
-export PYTHONPATH=~/.local/lib/python2.7/site-packages${PYTHONPATH:+:$PYTHONPATH}
-
-# Use globally installed TensorFlow
-source ~spch/prog/spch/add_tensorflow 1.8.0

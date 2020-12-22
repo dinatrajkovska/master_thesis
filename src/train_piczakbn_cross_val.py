@@ -189,11 +189,11 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", default=0.0005, type=float)
     parser.add_argument("--dataset_path", default="data/data_50_numpy/", type=str)
     parser.add_argument("--warmup_steps", type=int, default=0)
-    parser.add_argument("--log_mel", action="store_true")
-    parser.add_argument("--delta_log_mel", action="store_true")
-    parser.add_argument("--mfcc", action="store_true")
-    parser.add_argument("--chroma_stft", action="store_true")
-    parser.add_argument("--chroma_cqt", action="store_true")
+    parser.add_argument("--log_mel", type=bool, default=False)
+    parser.add_argument("--delta_log_mel", type=bool, default=False)
+    parser.add_argument("--mfcc", type=bool, default=False)
+    parser.add_argument("--chroma_stft", type=bool, default=False)
+    parser.add_argument("--chroma_cqt", type=bool, default=False)
     parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--model_type", default="batch_norm", type=str)
@@ -204,7 +204,7 @@ if __name__ == "__main__":
         "--augmentations",
         default="",
         type=str,
-        help="Comma-separated augmentations: pitch_shift, gaussian_noise",
+        help="Comma-separated augmentations: pitch_shift,gaussian_noise",
     )
     args = parser.parse_args()
     train_model(args)
