@@ -6,6 +6,8 @@ def model_factory(model_type: str, n_feature_types: int):
         return piczak_model(n_feature_types)
     elif model_type == "batch_norm":
         return piczak_batchnorm_model(n_feature_types)
+    elif model_type == "no_pool":
+        return piczak_batchnorm_model_no_pool(n_feature_types)
     elif model_type == "envnet_v2":
         return envnet_v2()
     else:
@@ -23,7 +25,6 @@ def piczak_model(n_feature_types):
         ),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(4, 3), stride=(1, 3)),
-        # nn.Dropout(0.5), Have a look at this dropout again
         nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(1, 3), stride=(1, 1)),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
@@ -53,6 +54,41 @@ def piczak_batchnorm_model(n_feature_types: int):
         nn.BatchNorm2d(num_features=80),
         nn.LeakyReLU(),
         nn.MaxPool2d(kernel_size=(1, 3), stride=(1, 3)),
+        nn.Flatten(),
+        nn.Linear(240, 5000),
+        nn.LeakyReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(5000, 5000),
+        nn.LeakyReLU(),
+        nn.Dropout(0.5),
+        nn.Linear(5000, 50),
+    )
+
+
+def piczak_batchnorm_model_no_pool(n_feature_types: int):
+    return nn.Sequential(
+        # Regular block
+        nn.Conv2d(
+            in_channels=n_feature_types,
+            out_channels=80,
+            kernel_size=(57, 6),
+            stride=(1, 1),
+        ),
+        nn.BatchNorm2d(num_features=80),
+        nn.LeakyReLU(),
+        # Added block
+        nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(4, 3), stride=(1, 3)),
+        nn.BatchNorm2d(num_features=80),
+        nn.LeakyReLU(),
+        # Regular block
+        nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(1, 3), stride=(1, 1)),
+        nn.BatchNorm2d(num_features=80),
+        nn.LeakyReLU(),
+        # Added block
+        nn.Conv2d(in_channels=80, out_channels=80, kernel_size=(1, 3), stride=(1, 3)),
+        nn.BatchNorm2d(num_features=80),
+        nn.LeakyReLU(),
+        # Regular block
         nn.Flatten(),
         nn.Linear(240, 5000),
         nn.LeakyReLU(),
