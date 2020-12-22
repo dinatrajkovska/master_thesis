@@ -30,8 +30,9 @@ def train_model(args):
         "log_mel": args.log_mel,
         "delta_log_mel": args.delta_log_mel,
         "mfcc": args.mfcc,
+        "gfcc": args.gfcc,
         "chroma_stft": args.chroma_stft,
-        "chroma_cqt": args.chroma_cqt,
+        "cqt": args.cqt,
     }
     data_splits = [
         (["1", "2", "3", "4"], ["5"]),
@@ -70,8 +71,9 @@ def train_model(args):
                 args.log_mel,
                 args.delta_log_mel,
                 args.mfcc,
+                args.gfcc,
                 args.chroma_stft,
-                args.chroma_cqt,
+                args.cqt,
             ]
         )
         # Create model, loss, optimizer, scheduler
@@ -107,9 +109,6 @@ def train_model(args):
                 loss = criterion(probs, target)
                 # backward
                 loss.backward()
-                # clip the gradients
-                if args.clip_val:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip_val)
                 # update weights
                 optimizer.step()
 
@@ -182,7 +181,7 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser = argparse.ArgumentParser(description="Cross-val LogMel CNN.")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--epochs", default=300, type=int)
     parser.add_argument("--learning_rate", default=0.01, type=float)
@@ -192,14 +191,14 @@ if __name__ == "__main__":
     parser.add_argument("--log_mel", type=bool, default=False)
     parser.add_argument("--delta_log_mel", type=bool, default=False)
     parser.add_argument("--mfcc", type=bool, default=False)
+    parser.add_argument("--gfcc", type=bool, default=False)
     parser.add_argument("--chroma_stft", type=bool, default=False)
-    parser.add_argument("--chroma_cqt", type=bool, default=False)
+    parser.add_argument("--cqt", type=bool, default=False)
     parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--model_type", default="batch_norm", type=str)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--log_filepath", type=str, default=None)
-    parser.add_argument("--clip_val", default=None, type=float)
     parser.add_argument(
         "--augmentations",
         default="",
