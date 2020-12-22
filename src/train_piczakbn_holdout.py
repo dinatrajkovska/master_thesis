@@ -50,8 +50,19 @@ def train_model(args):
         args.dataset_path, folds[4:], train=False, arguments=arguments, augmentations=[]
     )
     # Prepare dataloaders
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        pin_memory=True if args.num_workers else False,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=args.batch_size // 10,
+        num_workers=args.num_workers,
+        pin_memory=True if args.num_workers else False,
+    )
     n_feature_types = np.sum(
         [
             args.log_mel,
@@ -186,6 +197,7 @@ if __name__ == "__main__":
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--hop_length", default=512, type=int)
     parser.add_argument("--folds", default="1,2,3,4,5", type=str)
+    parser.add_argument("--num_workers", type=int, default=0)
     parser.add_argument(
         "--augmentations",
         default="",
