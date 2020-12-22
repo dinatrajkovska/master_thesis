@@ -217,7 +217,7 @@ class PiczakBNDataset(TorchDataset):
                     gfcc = fft_gtgram(
                         wave=audio[i],
                         fs=self.arguments["sampling_rate"],
-                        window_time=self.arguments["dft_window_size"]
+                        window_time=self.arguments["n_fft"]
                         / self.arguments["sampling_rate"],
                         hop_time=(self.arguments["hop_length"] - 52)
                         / self.arguments["sampling_rate"],
