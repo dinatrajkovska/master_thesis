@@ -149,7 +149,7 @@ class PiczakBNDataset(TorchDataset):
             )
             log_mel = None
             if self.arguments["log_mel"]:
-                log_mel = self.log_mel_spectrogram(audio, self.arguments)
+                log_mel = self.log_mel_spectrogram(audio)
                 features.append(z_score_normalize(log_mel))
             if self.arguments["delta_log_mel"]:
                 assert self.arguments["log_mel"]
@@ -157,8 +157,13 @@ class PiczakBNDataset(TorchDataset):
                 delta_log_mel = librosa.feature.delta(log_mel, axis=0)
                 features.append(z_score_normalize(delta_log_mel))
             if self.arguments["mfcc"]:
+                # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
                 # https://arxiv.org/abs/1706.07156 (MFCC only results on ESC-50)
-                mfcc = librosa.feature.mfcc(audio, n_mfcc=self.arguments["n_features"])
+                mfcc = librosa.feature.mfcc(
+                    audio,
+                    n_mfcc=self.arguments["n_features"],
+                    sr=self.arguments["sampling_rate"],
+                )
                 features.append(z_score_normalize(mfcc))
             if self.arguments["gfcc"]:
                 # https://detly.github.io/gammatone/fftweight.html
@@ -174,11 +179,16 @@ class PiczakBNDataset(TorchDataset):
                 )
                 features.append(z_score_normalize(gfcc))
             if self.arguments["chroma_stft"]:
+                # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
                 chroma_stft = librosa.feature.chroma_stft(
-                    audio, n_chroma=self.arguments["n_features"], norm=None
+                    audio,
+                    n_chroma=self.arguments["n_features"],
+                    norm=None,
+                    sr=self.arguments["sampling_rate"],
                 )
                 features.append(z_score_normalize(chroma_stft))
             if self.arguments["cqt"]:
+                # https://librosa.org/doc/latest/generated/librosa.cqt.html#librosa.cqt
                 cqt = np.abs(
                     librosa.cqt(
                         audio,
@@ -207,6 +217,7 @@ class PiczakBNDataset(TorchDataset):
                     delta_log_mel = librosa.feature.delta(log_mel, axis=0)
                     crop_features.append(z_score_normalize(delta_log_mel))
                 if self.arguments["mfcc"]:
+                    # https://librosa.org/doc/latest/generated/librosa.feature.mfcc.html
                     # https://arxiv.org/abs/1706.07156 (MFCC only results on ESC-50)
                     mfcc = librosa.feature.mfcc(
                         audio[i],
@@ -228,11 +239,16 @@ class PiczakBNDataset(TorchDataset):
                     )
                     crop_features.append(z_score_normalize(gfcc))
                 if self.arguments["chroma_stft"]:
+                    # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
                     chroma_stft = librosa.feature.chroma_stft(
-                        audio[i], n_chroma=self.arguments["n_features"], norm=None
+                        audio[i],
+                        n_chroma=self.arguments["n_features"],
+                        norm=None,
+                        sr=self.arguments["sampling_rate"],
                     )
                     crop_features.append(z_score_normalize(chroma_stft))
                 if self.arguments["cqt"]:
+                    # https://librosa.org/doc/latest/generated/librosa.cqt.html#librosa.cqt
                     cqt = np.abs(
                         librosa.cqt(
                             audio[i],
