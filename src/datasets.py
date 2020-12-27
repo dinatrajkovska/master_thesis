@@ -199,7 +199,7 @@ class PiczakBNDataset(TorchDataset):
                 crop_features = []
                 log_mel = None
                 if self.arguments["log_mel"]:
-                    log_mel = self.log_mel_spectrogram(audio[i], self.arguments)
+                    log_mel = self.log_mel_spectrogram(audio[i])
                     crop_features.append(z_score_normalize(log_mel))
                 if self.arguments["delta_log_mel"]:
                     assert self.arguments["log_mel"]
@@ -209,7 +209,9 @@ class PiczakBNDataset(TorchDataset):
                 if self.arguments["mfcc"]:
                     # https://arxiv.org/abs/1706.07156 (MFCC only results on ESC-50)
                     mfcc = librosa.feature.mfcc(
-                        audio[i], n_mfcc=self.arguments["n_features"]
+                        audio[i],
+                        n_mfcc=self.arguments["n_features"],
+                        sr=self.arguments["sampling_rate"],
                     )
                     crop_features.append(z_score_normalize(mfcc))
                 if self.arguments["gfcc"]:
@@ -258,14 +260,15 @@ class PiczakBNDataset(TorchDataset):
             label,
         )
 
-    def log_mel_spectrogram(self, audio, arguments):
+    def log_mel_spectrogram(self, audio):
         # https://librosa.org/doc/latest/generated/librosa.feature.melspectrogram.html
         # Convert to mel spectrogram
         mel_spectrogram = librosa.feature.melspectrogram(
             audio,
-            n_fft=arguments["n_fft"],
-            hop_length=arguments["hop_length"],
-            n_mels=arguments["n_features"],
+            n_fft=self.arguments["n_fft"],
+            hop_length=self.arguments["hop_length"],
+            n_mels=self.arguments["n_features"],
+            sr=self.arguments["sampling_rate"],
         )
         log_mel_spectrogram = librosa.power_to_db(mel_spectrogram)
         return log_mel_spectrogram
