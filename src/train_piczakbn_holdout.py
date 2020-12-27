@@ -46,10 +46,18 @@ def train_model(args):
         train=True,
         arguments=arguments,
         augmentations=args.augmentations.split(","),
+        val_cqts_path=args.val_cqts_path,
+        val_gfccs_path=args.val_gfccs_path,
     )
     # Last one is val
     val_dataset = PiczakBNDataset(
-        args.dataset_path, folds[4:], train=False, arguments=arguments, augmentations=[]
+        args.dataset_path,
+        folds[4:],
+        train=False,
+        arguments=arguments,
+        augmentations=[],
+        val_cqts_path=args.val_cqts_path,
+        val_gfccs_path=args.val_gfccs_path,
     )
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
@@ -148,7 +156,7 @@ def train_model(args):
                 best_epoch = epoch + 1
                 logging.info("===========================")
                 logging.info(
-                    f"Best on epoch {best_epoch} with accuracy {best_accuracy}! Saving..."
+                    f"Best on epoch {best_epoch} with accuracy {best_accuracy}!"
                 )
                 logging.info("Per-class accuracies:")
                 for target in target2total.keys():
@@ -179,8 +187,10 @@ if __name__ == "__main__":
     parser.add_argument("--delta_log_mel", type=bool, default=False)
     parser.add_argument("--mfcc", type=bool, default=False)
     parser.add_argument("--gfcc", type=bool, default=False)
+    parser.add_argument("--val_gfccs_path", default=None, type=str)
     parser.add_argument("--chroma_stft", type=bool, default=False)
     parser.add_argument("--cqt", type=bool, default=False)
+    parser.add_argument("--val_cqts_path", default=None, type=str)
     parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--model_type", default="batch_norm", type=str)
     parser.add_argument("--dft_window_size", default=1024, type=int)

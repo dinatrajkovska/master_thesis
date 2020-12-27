@@ -112,6 +112,8 @@ class PiczakBNDataset(TorchDataset):
         train: bool,
         arguments: Dict[str, Any],
         augmentations: List[str],
+        val_cqts_path: str = None,
+        val_gfccs_path: str = None,
     ):
         self.arguments = arguments
         self.paths = []
@@ -128,6 +130,16 @@ class PiczakBNDataset(TorchDataset):
                 if name in name2augmentation.keys()
             ]
         )
+        self.val_cqts_path = val_cqts_path
+        self.val_gfccs_path = val_gfccs_path
+        if self.arguments["cqt"]:
+            assert (
+                self.val_cqts_path is not None
+            ), "cqt feature is True but there is no val_cqts_path"
+        if self.arguments["gfcc"]:
+            assert (
+                self.val_gfccs_path is not None
+            ), "gfcc feature is True but there is no val_gfccs_path"
 
     def __getitem__(self, idx):
         # Prepare audio basics
@@ -184,6 +196,8 @@ class PiczakBNDataset(TorchDataset):
                     n_chroma=self.arguments["n_features"],
                     norm=None,
                     sr=self.arguments["sampling_rate"],
+                    n_fft=self.arguments["n_fft"],
+                    hop_length=self.arguments["hop_length"],
                 )
                 features.append(z_score_normalize(chroma_stft))
             if self.arguments["cqt"]:
@@ -203,6 +217,7 @@ class PiczakBNDataset(TorchDataset):
             ).astype(np.float32)
         else:
             # Multi-crop audio
+            audio_name = os.path.split(self.paths[idx])[-1].split(".")[0]
             audio = multi_crop(audio, 20480, 10)
             for i in range(10):
                 crop_features = []
@@ -226,16 +241,10 @@ class PiczakBNDataset(TorchDataset):
                     crop_features.append(z_score_normalize(mfcc))
                 if self.arguments["gfcc"]:
                     # https://detly.github.io/gammatone/fftweight.html
-                    gfcc = fft_gtgram(
-                        wave=audio[i],
-                        fs=self.arguments["sampling_rate"],
-                        window_time=self.arguments["n_fft"]
-                        / self.arguments["sampling_rate"],
-                        hop_time=(self.arguments["hop_length"] - 52)
-                        / self.arguments["sampling_rate"],
-                        channels=self.arguments["n_features"],
-                        f_min=32.7,
+                    gfcc_path = os.path.join(
+                        self.val_gfccs_path, f"{audio_name}-gfcc-{i}.npy"
                     )
+                    gfcc = np.load(gfcc_path)
                     crop_features.append(z_score_normalize(gfcc))
                 if self.arguments["chroma_stft"]:
                     # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
@@ -244,19 +253,16 @@ class PiczakBNDataset(TorchDataset):
                         n_chroma=self.arguments["n_features"],
                         norm=None,
                         sr=self.arguments["sampling_rate"],
+                        n_fft=self.arguments["n_fft"],
+                        hop_length=self.arguments["hop_length"],
                     )
                     crop_features.append(z_score_normalize(chroma_stft))
                 if self.arguments["cqt"]:
                     # https://librosa.org/doc/latest/generated/librosa.cqt.html#librosa.cqt
-                    cqt = np.abs(
-                        librosa.cqt(
-                            audio[i],
-                            sr=self.arguments["sampling_rate"],
-                            hop_length=self.arguments["hop_length"],
-                            n_bins=self.arguments["n_features"],
-                            norm=None,
-                        )
+                    cqt_path = os.path.join(
+                        self.val_cqts_path, f"{audio_name}-cqt-{i}.npy"
                     )
+                    cqt = np.load(cqt_path)
                     crop_features.append(z_score_normalize(cqt))
                 crop_features = np.concatenate(
                     [np.expand_dims(feature, axis=0) for feature in crop_features],
@@ -268,16 +274,10 @@ class PiczakBNDataset(TorchDataset):
         filename = os.path.split(self.paths[idx])[-1]
         label = int(filename.split(".")[0].split("-")[-1])
 
-        return (
-            # input
-            features,
-            # target
-            label,
-        )
+        return features, label
 
     def log_mel_spectrogram(self, audio):
         # https://librosa.org/doc/latest/generated/librosa.feature.melspectrogram.html
-        # Convert to mel spectrogram
         mel_spectrogram = librosa.feature.melspectrogram(
             audio,
             n_fft=self.arguments["n_fft"],

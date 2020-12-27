@@ -112,7 +112,7 @@ def train_model(args):
                 best_epoch = epoch + 1
                 logging.info("===========================")
                 logging.info(
-                    f"Best on epoch {best_epoch} with accuracy {best_accuracy}! Saving..."
+                    f"Best on epoch {best_epoch} with accuracy {best_accuracy}!"
                 )
                 logging.info("Per-class accuracies:")
                 for target in target2total.keys():

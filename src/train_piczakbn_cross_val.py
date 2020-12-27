@@ -54,6 +54,8 @@ def train_model(args):
             train=True,
             arguments=arguments,
             augmentations=args.augmentations.split(","),
+            val_cqts_path=args.val_cqts_path,
+            val_gfccs_path=args.val_gfccs_path,
         )
         val_dataset = PiczakBNDataset(
             args.dataset_path,
@@ -61,6 +63,8 @@ def train_model(args):
             train=False,
             arguments=arguments,
             augmentations=[],
+            val_cqts_path=args.val_cqts_path,
+            val_gfccs_path=args.val_gfccs_path,
         )
         # Construct loaders
         train_loader = DataLoader(
@@ -194,8 +198,10 @@ if __name__ == "__main__":
     parser.add_argument("--delta_log_mel", type=bool, default=False)
     parser.add_argument("--mfcc", type=bool, default=False)
     parser.add_argument("--gfcc", type=bool, default=False)
+    parser.add_argument("--val_gfccs_path", default=None, type=str)
     parser.add_argument("--chroma_stft", type=bool, default=False)
     parser.add_argument("--cqt", type=bool, default=False)
+    parser.add_argument("--val_cqts_path", default=None, type=str)
     parser.add_argument("--n_features", default=60, type=int)
     parser.add_argument("--dft_window_size", default=1024, type=int)
     parser.add_argument("--model_type", default="batch_norm", type=str)
