@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", default=300, type=int)
     parser.add_argument("--learning_rate", default=0.002, type=float)
     parser.add_argument("--weight_decay", default=0.001, type=float)
-    parser.add_argument("--dataset_path", default="data/data_50_numpy_22050/", type=str)
+    parser.add_argument("--dataset_path", default="data/data_50_numpy_22050", type=str)
     parser.add_argument("--warmup_steps", type=int, default=0)
     parser.add_argument("--log_filepath", type=str, default=None)
     parser.add_argument(
