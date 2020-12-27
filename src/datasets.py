@@ -128,7 +128,6 @@ class PiczakBNDataset(TorchDataset):
                 if name in name2augmentation.keys()
             ]
         )
-        self.arguments["sampling_rate"] = int(directory_path.split("_")[-1])
 
     def __getitem__(self, idx):
         # Prepare audio basics

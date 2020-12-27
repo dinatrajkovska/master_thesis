@@ -27,6 +27,7 @@ def train_model(args):
         "n_fft": args.dft_window_size,
         "hop_length": args.hop_length,
         "n_features": args.n_features,
+        "sampling_rate": int(args.dataset_path.split("_")[-1]),
         "log_mel": args.log_mel,
         "delta_log_mel": args.delta_log_mel,
         "mfcc": args.mfcc,
@@ -34,6 +35,7 @@ def train_model(args):
         "chroma_stft": args.chroma_stft,
         "cqt": args.cqt,
     }
+    logging.info(arguments)
     # Prepare datasets
     folds = args.folds.split(",")
     # First four are train
