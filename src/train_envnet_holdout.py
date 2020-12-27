@@ -24,10 +24,18 @@ def train_model(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.info(f"-------- Using device {device} --------")
     # Prepare datasets
+    folds = args.folds.split(",")
+    logging.info(f"Training folds: {folds[:4]}")
     train_dataset = EnvNetDataset(
-        args.dataset_path, ["1", "2", "3", "4"], train=True, augmentations=[]
+        args.dataset_path,
+        folds[4:],
+        train=True,
+        augmentations=args.augmentations.split(","),
     )
-    val_dataset = EnvNetDataset(args.dataset_path, ["5"], train=False, augmentations=[])
+    logging.info(f"Testing fold: {folds[4:]}")
+    val_dataset = EnvNetDataset(
+        args.dataset_path, folds[4:], train=False, augmentations=[]
+    )
     # Prepare dataloaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size // 10)
@@ -46,8 +54,6 @@ def train_model(args):
     logging.info(
         f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
     )
-    best_accuracy = -1
-    best_epoch = -1
     for epoch in range(args.epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -68,65 +74,54 @@ def train_model(args):
                 pbar.update(1)
                 pbar.set_postfix({"Batch loss": loss.item()})
 
-        # Set model in evaluation mode
-        model.train(False)
-        target2total = {}
-        target2correct = {}
-        predictions = np.zeros(len(val_dataset))
-        targets = np.zeros(len(val_dataset))
-        index = 0
-        with torch.no_grad():
-            for audio, target in tqdm(val_loader):
-                audio, target = audio.to(device), target.to(device)
-                # Obtain dimensions
-                val_batch_size = audio.size()[0]
-                num_samples = audio.size()[-1]
-                audio = audio.view(val_batch_size * 10, 1, 1, num_samples)
-                # Obtain predictions: [Val-BS * 10, Num-classes]
-                probs = model(audio)
-                num_classes = probs.size()[-1]
-                # [Val-BS, 10, 50]
-                prediction = probs.view(val_batch_size, 10, num_classes)
-                # [Val-BS, 50]
-                prediction = prediction.mean(1)
-                # [Val-BS, 1]
-                prediction = prediction.argmax(-1)
-                # Aggregate predictions and targets
-                predictions[index : index + val_batch_size] = prediction.cpu().numpy()
-                targets[index : index + val_batch_size] = target.cpu().numpy()
-                index += val_batch_size
-
-            for i in range(predictions.shape[0]):
-                target = targets[i]
-                pred = predictions[i]
-                if target not in target2total:
-                    target2total[target] = 0
-                    target2correct[target] = 0
-                target2total[target] += 1
-                if pred == target:
-                    target2correct[target] += 1
-
-            cur_accuracy = sum(target2correct.values()) / sum(target2total.values())
-            if cur_accuracy > best_accuracy:
-                best_accuracy = cur_accuracy
-                best_epoch = epoch + 1
-                logging.info("===========================")
-                logging.info(
-                    f"Best on epoch {best_epoch} with accuracy {best_accuracy}!"
-                )
-                logging.info("Per-class accuracies:")
-                for target in target2total.keys():
-                    logging.info(
-                        f"{target2name[target]}: {target2correct[target]/target2total[target]}"
-                    )
-                logging.info("===========================")
-            else:
-                logging.info(f"Epoch {epoch+1} with accuracy {cur_accuracy}!")
-
         scheduler.step()
 
+    # Set model in evaluation mode
+    model.train(False)
+    target2total = {}
+    target2correct = {}
+    predictions = np.zeros(len(val_dataset))
+    targets = np.zeros(len(val_dataset))
+    index = 0
+    with torch.no_grad():
+        for audio, target in tqdm(val_loader):
+            audio, target = audio.to(device), target.to(device)
+            # Obtain dimensions
+            val_batch_size = audio.size()[0]
+            num_samples = audio.size()[-1]
+            audio = audio.view(val_batch_size * 10, 1, 1, num_samples)
+            # Obtain predictions: [Val-BS * 10, Num-classes]
+            probs = model(audio)
+            num_classes = probs.size()[-1]
+            # [Val-BS, 10, 50]
+            prediction = probs.view(val_batch_size, 10, num_classes)
+            # [Val-BS, 50]
+            prediction = prediction.mean(1)
+            # [Val-BS, 1]
+            prediction = prediction.argmax(-1)
+            # Aggregate predictions and targets
+            predictions[index : index + val_batch_size] = prediction.cpu().numpy()
+            targets[index : index + val_batch_size] = target.cpu().numpy()
+            index += val_batch_size
+
+        for i in range(predictions.shape[0]):
+            target = targets[i]
+            pred = predictions[i]
+            if target not in target2total:
+                target2total[target] = 0
+                target2correct[target] = 0
+            target2total[target] += 1
+            if pred == target:
+                target2correct[target] += 1
+
+    accuracy = sum(target2correct.values()) / sum(target2total.values())
     logging.info("===========================")
-    logging.info(f"Best total accuracy {best_accuracy} on epoch {best_epoch}")
+    logging.info(f"The accuracy is {accuracy}!")
+    logging.info("Per-class accuracies:")
+    for target in target2total.keys():
+        logging.info(
+            f"{target2name[target]}: {target2correct[target]/target2total[target]}"
+        )
     logging.info("===========================")
 
 
@@ -139,5 +134,12 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", default="data/data_50_numpy_22050", type=str)
     parser.add_argument("--log_filepath", type=str, default=None)
     parser.add_argument("--warmup_steps", type=int, default=20)
+    parser.add_argument("--folds", default="1,2,3,4,5", type=str)
+    parser.add_argument(
+        "--augmentations",
+        default="none",
+        type=str,
+        help="Comma-separated augmentations: pitch_shift,gaussian_noise",
+    )
     args = parser.parse_args()
     train_model(args)
