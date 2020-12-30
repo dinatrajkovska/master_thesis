@@ -21,8 +21,16 @@ def train_model(args):
         )
     else:
         logging.basicConfig(level=logging.INFO)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logging.info(f"-------- Using device {device} --------")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        for i in range(torch.cuda.device_count()):
+            logging.warning(f"{torch.cuda.get_device_properties(f'cuda:{i}')}")
+            logging.warning(
+                f"Current occupied memory: {torch.cuda.memory_allocated(i) * 1e-9} GB"
+            )
+    else:
+        device = torch.device("cpu")
+    logging.warning(f"Using device {device}!!!")
     # Prepare datasets
     folds = args.folds.split(",")
     logging.info(f"Training folds: {folds[:4]}")
