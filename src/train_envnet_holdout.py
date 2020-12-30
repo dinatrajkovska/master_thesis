@@ -28,7 +28,7 @@ def train_model(args):
     logging.info(f"Training folds: {folds[:4]}")
     train_dataset = EnvNetDataset(
         args.dataset_path,
-        folds[4:],
+        folds[:4],
         train=True,
         augmentations=args.augmentations.split(","),
     )
