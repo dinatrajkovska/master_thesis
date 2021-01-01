@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 
@@ -62,7 +63,21 @@ def train_model(args):
     logging.info(
         f"Train on {len(train_dataset)}, validate on {len(val_dataset)} samples."
     )
-    for epoch in range(args.epochs):
+    cur_epoch = 0
+    if os.path.exists(args.checkpoint_path):
+        # https://discuss.pytorch.org/t/saving-model-and-optimiser-and-scheduler/52030/8
+        checkpoint = torch.load(args.checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        cur_epoch = checkpoint["epoch"]
+        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+        # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
+        del checkpoint
+        logging.warning(
+            f"Starting training from checkpoint {args.checkpoint_path} with starting epoch {cur_epoch+1}!"
+        )
+
+    for epoch in range(cur_epoch, args.epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
@@ -83,6 +98,17 @@ def train_model(args):
                 pbar.set_postfix({"Batch loss": loss.item()})
 
         scheduler.step()
+
+        # Save training state dict
+        torch.save(
+            {
+                "epoch": epoch + 1,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
+            },
+            args.checkpoint_path,
+        )
 
     # Set model in evaluation mode
     model.train(False)
@@ -135,6 +161,7 @@ def train_model(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train EnvNet on holdout.")
+    parser.add_argument("--checkpoint_path", default=None, type=str)
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--learning_rate", default=0.002, type=float)
     parser.add_argument("--weight_decay", default=0.001, type=float)
