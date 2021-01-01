@@ -1,16 +1,16 @@
+import math
 import os
 import random
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 import librosa
 import numpy as np
 import torch
+from audiomentations import AddGaussianNoise, Compose, PitchShift
+from gammatone.fftweight import fft_gtgram
 from natsort import natsorted
 from torch.utils.data import Dataset as TorchDataset
 from tqdm import tqdm
-from audiomentations import Compose, AddGaussianNoise, PitchShift
-from gammatone.fftweight import fft_gtgram
-
 
 # https://github.com/karolpiczak/ESC-50
 
@@ -94,7 +94,7 @@ def multi_crop(sound, input_length, n_crops):
 def random_crop(sound, size):
     org_size = len(sound)
     start = random.randint(0, org_size - size)
-    return sound[start : start + size]
+    return sound[start : start + size], start, org_size
 
 
 def z_score_normalize(features: np.ndarray):
@@ -102,6 +102,12 @@ def z_score_normalize(features: np.ndarray):
     # https://stackoverflow.com/questions/54432486/normalizing-mel-spectrogram-to-unit-peak-amplitude
     mean, std = features.mean(-1, keepdims=True), features.std(-1, keepdims=True)
     return (features - mean) / (std + 1e-15)
+
+
+def random_cqt_gfcc_crop(feature, start_audio, size_audio):
+    start_f = math.floor((start_audio / size_audio) * feature.shape[1])
+    end_f = start_f + 41  # Fixed because crop-size is fixed
+    return feature[:, start_f:end_f]
 
 
 class PiczakBNDataset(TorchDataset):
@@ -112,8 +118,8 @@ class PiczakBNDataset(TorchDataset):
         train: bool,
         arguments: Dict[str, Any],
         augmentations: List[str],
-        val_cqts_path: str = None,
-        val_gfccs_path: str = None,
+        train_cqts_path: str = None,
+        train_gfccs_path: str = None,
     ):
         self.arguments = arguments
         self.paths = []
@@ -130,16 +136,16 @@ class PiczakBNDataset(TorchDataset):
                 if name in name2augmentation.keys()
             ]
         )
-        self.val_cqts_path = val_cqts_path
-        self.val_gfccs_path = val_gfccs_path
+        self.train_cqts_path = train_cqts_path
+        self.train_gfccs_path = train_gfccs_path
         if self.arguments["cqt"]:
             assert (
-                self.val_cqts_path is not None
-            ), "cqt feature is True but there is no val_cqts_path"
+                self.train_cqts_path is not None
+            ), "cqt feature is True but there is no train_cqts_path"
         if self.arguments["gfcc"]:
             assert (
-                self.val_gfccs_path is not None
-            ), "gfcc feature is True but there is no val_gfccs_path"
+                self.train_gfccs_path is not None
+            ), "gfcc feature is True but there is no train_gfccs_path"
 
     def __getitem__(self, idx):
         # Prepare audio basics
@@ -151,9 +157,10 @@ class PiczakBNDataset(TorchDataset):
         # Pad audio
         audio = padding(audio, 20480 // 2)
         features = []
+        audio_name = os.path.split(self.paths[idx])[-1].split(".")[0]
         if self.train:
             # Random crop
-            audio = random_crop(audio, 20480)
+            audio, start_audio, size_audio = random_crop(audio, 20480)
             # Augment audio
             audio = self.augmentations(
                 audio, sample_rate=self.arguments["sampling_rate"]
@@ -178,16 +185,11 @@ class PiczakBNDataset(TorchDataset):
                 features.append(z_score_normalize(mfcc))
             if self.arguments["gfcc"]:
                 # https://detly.github.io/gammatone/fftweight.html
-                gfcc = fft_gtgram(
-                    wave=audio,
-                    fs=self.arguments["sampling_rate"],
-                    window_time=self.arguments["n_fft"]
-                    / self.arguments["sampling_rate"],
-                    hop_time=(self.arguments["hop_length"] - 52)
-                    / self.arguments["sampling_rate"],
-                    channels=60,
-                    f_min=32.7,
+                gfcc_path = os.path.join(
+                    self.train_gfccs_path, f"{audio_name}-gfcc.npy"
                 )
+                gfcc = np.load(gfcc_path)
+                gfcc = random_cqt_gfcc_crop(gfcc, start_audio, size_audio)
                 features.append(z_score_normalize(gfcc))
             if self.arguments["chroma_stft"]:
                 # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
@@ -202,15 +204,9 @@ class PiczakBNDataset(TorchDataset):
                 features.append(z_score_normalize(chroma_stft))
             if self.arguments["cqt"]:
                 # https://librosa.org/doc/latest/generated/librosa.cqt.html#librosa.cqt
-                cqt = np.abs(
-                    librosa.cqt(
-                        audio,
-                        sr=self.arguments["sampling_rate"],
-                        hop_length=self.arguments["hop_length"],
-                        n_bins=self.arguments["n_features"],
-                        norm=None,
-                    )
-                )
+                cqt_path = os.path.join(self.train_cqts_path, f"{audio_name}-cqt.npy")
+                cqt = np.abs(np.load(cqt_path))
+                cqt = random_cqt_gfcc_crop(cqt, start_audio, size_audio)
                 features.append(z_score_normalize(cqt))
             features = np.concatenate(
                 [np.expand_dims(feature, axis=0) for feature in features], axis=0
@@ -241,10 +237,16 @@ class PiczakBNDataset(TorchDataset):
                     crop_features.append(z_score_normalize(mfcc))
                 if self.arguments["gfcc"]:
                     # https://detly.github.io/gammatone/fftweight.html
-                    gfcc_path = os.path.join(
-                        self.val_gfccs_path, f"{audio_name}-gfcc-{i}.npy"
+                    gfcc = fft_gtgram(
+                        wave=audio[i],
+                        fs=self.arguments["sampling_rate"],
+                        window_time=self.arguments["n_fft"]
+                        / self.arguments["sampling_rate"],
+                        hop_time=(self.arguments["hop_length"] - 52)
+                        / self.arguments["sampling_rate"],
+                        channels=self.arguments["n_features"],
+                        f_min=32.7,
                     )
-                    gfcc = np.load(gfcc_path)
                     crop_features.append(z_score_normalize(gfcc))
                 if self.arguments["chroma_stft"]:
                     # https://librosa.org/doc/latest/generated/librosa.feature.chroma_stft.html
@@ -259,10 +261,15 @@ class PiczakBNDataset(TorchDataset):
                     crop_features.append(z_score_normalize(chroma_stft))
                 if self.arguments["cqt"]:
                     # https://librosa.org/doc/latest/generated/librosa.cqt.html#librosa.cqt
-                    cqt_path = os.path.join(
-                        self.val_cqts_path, f"{audio_name}-cqt-{i}.npy"
+                    cqt = np.abs(
+                        librosa.cqt(
+                            audio[i],
+                            sr=self.arguments["sampling_rate"],
+                            hop_length=self.arguments["hop_length"],
+                            n_bins=self.arguments["n_features"],
+                            norm=None,
+                        )
                     )
-                    cqt = np.load(cqt_path)
                     crop_features.append(z_score_normalize(cqt))
                 crop_features = np.concatenate(
                     [np.expand_dims(feature, axis=0) for feature in crop_features],
@@ -330,7 +337,7 @@ class EnvNetDataset(TorchDataset):
         audio = padding(audio, 66650 // 2)
         if self.train:
             # Random crop
-            audio = random_crop(audio, 66650)
+            audio, _, _ = random_crop(audio, 66650)
             # Augment audio
             audio = self.augmentations(audio, sample_rate=self.sampling_rate)
             # Prepare audio
